@@ -296,10 +296,27 @@ END_FOR;
 xPumpCommRaw[1] := EMD_PUMP_1.xError;
 xPumpCommRaw[2] := EMD_PUMP_2.xError;
 
-tonPumpCommFilter[1](IN := EMD_PUMP_1.xError, PT := T#3S);
+(* === ДДЮТ:ИСПРАВЛЕНО (баг: статус ПЧ прыгал каждые 3-5 сек) === *)
+(* Раньше TON висел прямо на xError. TON — задержка ТОЛЬКО на     *)
+(* включение: на спаде IN его Q сбрасывается МГНОВЕННО, а ET      *)
+(* обнуляется. Драйвер Modbus при физически отсутствующем ПЧ не   *)
+(* держит xError постоянно взведённым — между попытками опроса    *)
+(* флаг коротко проваливается в FALSE. В этот скан оба флага —    *)
+(* и сырой, и фильтрованный — были FALSE, защита в FB_Pump не     *)
+(* срабатывала, и статус срывался на "Стоп" по нулевому wStatus.  *)
+(* Затем TON набирал свои 3с с нуля — отсюда period 3-5 секунд.   *)
+(* Побочно мигали iErrorsModules и sSystemStateText на главном.   *)
+(* TOF перекрывает провалы, TON видит уже сплошной сигнал:        *)
+(* подъём как был (3с непрерывной ошибки), спад теперь требует    *)
+(* 10с непрерывно исправной связи.                                *)
+(* Если мигание останется — пауза опроса драйвера длиннее уставки,*)
+(* поднять PT у TOF. Зависит от таймаута/ретраев в дереве Modbus. *)
+tofPumpCommHold[1](IN := EMD_PUMP_1.xError, PT := T#10S);
+tonPumpCommFilter[1](IN := tofPumpCommHold[1].Q, PT := T#3S);
 xPumpCommError[1] := tonPumpCommFilter[1].Q;
 
-tonPumpCommFilter[2](IN := EMD_PUMP_2.xError, PT := T#3S);
+tofPumpCommHold[2](IN := EMD_PUMP_2.xError, PT := T#10S);
+tonPumpCommFilter[2](IN := tofPumpCommHold[2].Q, PT := T#3S);
 xPumpCommError[2] := tonPumpCommFilter[2].Q;
 
 (* ========================================================= *)

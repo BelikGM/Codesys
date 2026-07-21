@@ -207,6 +207,9 @@ VAR_GLOBAL
     xPumpCommError : ARRAY[1..cPumpCount] OF BOOL;
     xPumpCommRaw   : ARRAY[1..cPumpCount] OF BOOL;
     tonPumpCommFilter : ARRAY[1..cPumpCount] OF TON;
+    (* === 60ЛО:ИСПРАВЛЕНО (баг мигания статуса) === Удержание    *)
+    (* провалов xError перед фильтром TON — см. PRG_Pumps блок 4а *)
+    tofPumpCommHold   : ARRAY[1..cPumpCount] OF TOF;
 
     sPumpState         : ARRAY[1..cPumpCount] OF WSTRING(50);
     sPumpFaultText      : ARRAY[1..cPumpCount] OF WSTRING(100);

@@ -126,14 +126,12 @@ xDryRunAlarm := NOT xDryRunOk;    // ЖИВАЯ, НЕ защёлка. САМАЯ
 (* xDryRunOk — то же самое значение, которое уйдёт на DO1 в этом   *)
 (* же цикле (просто зеркало DI4→DO1), поэтому сравниваем с ним     *)
 (* напрямую — без задержки на цикл.                                *)
+(* === 60ЛО:ИЗМЕНЕНО === Была защёлка (снималась только xAlarmReset). *)
+(* Теперь авария ЖИВАЯ — самосброс: как только DO1 и DI8 снова        *)
+(* совпали, IN таймера падает, Q сбрасывается и авария уходит сама.   *)
+(* Кнопка сброса аварий для неё больше не нужна.                      *)
 tonDryRunRelayAlarm(IN := xDryRunOk <> xDryRunRelayFb, PT := T#2S);
-IF tonDryRunRelayAlarm.Q THEN
-    xDryRunRelayAlarm := TRUE;
-END_IF;
-IF xAlarmReset THEN
-    xDryRunRelayAlarm := FALSE;
-    tonDryRunRelayAlarm(IN := FALSE, PT := T#2S);
-END_IF;
+xDryRunRelayAlarm := tonDryRunRelayAlarm.Q;
 
 
 (* ============================================================ *)
@@ -145,27 +143,21 @@ ELSE
     sDamperPosition := "Закрыт";
 END_IF;
 
+(* === 60ЛО:ИЗМЕНЕНО === Была защёлка. Теперь ЖИВАЯ — самосброс:     *)
+(* клапан дошёл до нужного положения (DI6 совпал с DI5) — авария      *)
+(* снимается сама, без кнопки сброса.                                 *)
 tonDamperRelayAlarm(IN := xDamperCmdRaw <> xDamperRelayFb, PT := T#20S);
-IF tonDamperRelayAlarm.Q THEN
-    xDamperRelayAlarm := TRUE;
-END_IF;
-IF xAlarmReset THEN
-    xDamperRelayAlarm := FALSE;
-    tonDamperRelayAlarm(IN := FALSE, PT := T#20S);
-END_IF;
+xDamperRelayAlarm := tonDamperRelayAlarm.Q;
 
 
 (* ============================================================ *)
 (* 5. ФИЛЬТРАЦИЯ — режим/авария реле (2с)                        *)
 (* ============================================================ *)
+(* === 60ЛО:ИЗМЕНЕНО === Была защёлка. Теперь ЖИВАЯ — самосброс:     *)
+(* насос фильтрации запустился (DI7=1) или ручку увели из ручного     *)
+(* режима (DI12=0) — авария уходит сама.                              *)
 tonNfManualRelayAlarm(IN := xNfManualSwitch AND NOT xNfWork, PT := T#2S);
-IF tonNfManualRelayAlarm.Q THEN
-    xNfManualRelayAlarm := TRUE;
-END_IF;
-IF xAlarmReset THEN
-    xNfManualRelayAlarm := FALSE;
-    tonNfManualRelayAlarm(IN := FALSE, PT := T#2S);
-END_IF;
+xNfManualRelayAlarm := tonNfManualRelayAlarm.Q;
 
 (* === 60ЛО:ИСПРАВЛЕНО (баг компиляции) === Раньше здесь стоял      *)
 (* CASE TRUE OF — в CODESYS так писать НЕЛЬЗЯ (метка CASE требует   *)
@@ -376,14 +368,10 @@ IF xPumpsForceOn THEN
     xPumpsCmd := TRUE;   // ручной пуск — минуя все запреты
 END_IF;
 
+(* === 60ЛО:ИЗМЕНЕНО === Была защёлка. Теперь ЖИВАЯ — самосброс:     *)
+(* команда и DI9 снова совпали — авария уходит сама.                  *)
 tonPumpRelayAlarm(IN := xPumpsCmd <> xPumpRelayFb, PT := T#2S);
-IF tonPumpRelayAlarm.Q THEN
-    xPumpRelayAlarm := TRUE;
-END_IF;
-IF xAlarmReset THEN
-    xPumpRelayAlarm := FALSE;
-    tonPumpRelayAlarm(IN := FALSE, PT := T#2S);
-END_IF;
+xPumpRelayAlarm := tonPumpRelayAlarm.Q;
 
 CASE iPumpSelect OF
     0: sPermissionStatus := "Ручной пуск";
@@ -401,14 +389,10 @@ IF xLightForceOn THEN
     xLightCmd := TRUE;
 END_IF;
 
+(* === 60ЛО:ИЗМЕНЕНО === Была защёлка. Теперь ЖИВАЯ — самосброс:     *)
+(* команда и DI10 снова совпали — авария уходит сама.                 *)
 tonLightRelayAlarm(IN := xLightCmd <> xLightRelayFb, PT := T#2S);
-IF tonLightRelayAlarm.Q THEN
-    xLightRelayAlarm := TRUE;
-END_IF;
-IF xAlarmReset THEN
-    xLightRelayAlarm := FALSE;
-    tonLightRelayAlarm(IN := FALSE, PT := T#2S);
-END_IF;
+xLightRelayAlarm := tonLightRelayAlarm.Q;
 
 CASE iLightSelect OF
     0: sLightStatus := "Ручной пуск";

@@ -270,7 +270,7 @@ VAR_GLOBAL
     xDryRunOk    : BOOL;   // ← DI4, 1=норма (сигнал уже готов от Мусидоры)
     xDryRunAlarm : BOOL;   // = NOT xDryRunOk, ЖИВАЯ, САМАЯ ПЕРВАЯ авария в списке
     xDryRunRelayFb    : BOOL;   // ← DI8, подтверждение реле сухого хода
-    xDryRunRelayAlarm : BOOL;   // авария: DO1 и DI8 разошлись >2с (защёлка)
+    xDryRunRelayAlarm : BOOL;   // авария: DO1 и DI8 разошлись >2с (ЖИВАЯ, самосброс)
 
     xLevel2LowConfirmed  : BOOL;  // 60ЛО: не используется
     xLevel2HighConfirmed : BOOL;  // 60ЛО: не используется
@@ -286,7 +286,7 @@ VAR_GLOBAL
     xDamperForceClose  : BOOL;       // 60ЛО: не используется
     xDamperZapretDobor : BOOL;       // 60ЛО: не используется
     xDamperRelayFb   : BOOL;         // ← DI6, подтверждение положения клапана
-    xDamperRelayAlarm : BOOL;        // авария: DO4 и DI6 разошлись >20с (защёлка)
+    xDamperRelayAlarm : BOOL;        // авария: DO4 и DI6 разошлись >20с (ЖИВАЯ, самосброс)
     sDamperPosition   : WSTRING(20); // "Открыт" / "Закрыт" (по DI6)
     sDamperFullStatus : WSTRING(50); // 60ЛО: не используется
 
@@ -305,7 +305,7 @@ VAR_GLOBAL
 
     xNfAutoSwitch    : BOOL;   // ← DI11, ручка режима фильтрации = АВТО
     xNfManualSwitch  : BOOL;   // ← DI12, ручка режима фильтрации = РУЧНОЙ
-    xNfManualRelayAlarm : BOOL; // авария: ручной режим (DI12), а DI7=0 более 2с (защёлка)
+    xNfManualRelayAlarm : BOOL; // авария: ручной режим (DI12), а DI7=0 более 2с (ЖИВАЯ, самосброс)
     sNfModeStatus     : WSTRING(30);  // "Авто"/"Ручной"/"?" — текст режима по DI11/DI12
 
     (* ===== ОПАСНАЯ СИТУАЦИЯ: СУХОЙ ХОД + РУЧНАЯ ФИЛЬТРАЦИЯ ===== *)
@@ -430,7 +430,7 @@ VAR_GLOBAL
     xLightFault      : BOOL;          // 60ЛО: не используется, всегда FALSE
 
     xLightRelayFb    : BOOL;   // ← DI10, подтверждение работы подсветки
-    xLightRelayAlarm : BOOL;   // авария: DO3 и DI10 разошлись >2с (защёлка)
+    xLightRelayAlarm : BOOL;   // авария: DO3 и DI10 разошлись >2с (ЖИВАЯ, самосброс)
 
     (* ===== РАСЧЁТ ЗАКАТА — диагностика для экрана, АКТИВНО ===== *)
     rSunTimeZone       : REAL;
@@ -476,7 +476,7 @@ VAR_GLOBAL
     xPumpsForceOn  : BOOL;           // = "ручной пуск" (iPumpSelect=0), OR-приоритет
 
     xPumpRelayFb    : BOOL;   // ← DI9, подтверждение работы насосов
-    xPumpRelayAlarm : BOOL;   // авария: DO2 и DI9 разошлись >2с (защёлка)
+    xPumpRelayAlarm : BOOL;   // авария: DO2 и DI9 разошлись >2с (ЖИВАЯ, самосброс)
 
     (* ===== ЗВУК (FUTURE_SOUND) — 60ЛО: не используется ========= *)
     xSoundOnSchedule : BOOL;

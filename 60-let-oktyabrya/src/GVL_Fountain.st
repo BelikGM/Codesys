@@ -118,9 +118,9 @@ VAR_GLOBAL RETAIN
     xSoundEnable : BOOL := TRUE;    // FUTURE_SOUND, не используется
 
     (* ===== РАСЧЁТ ЗАКАТА — АКТИВНО, БЕЗ ИЗМЕНЕНИЙ ============== *)
-    rSunLatitude          : REAL := 44.61581;
-    rSunLongitude         : REAL := 33.52276;
-    rSunLongitudePrev     : REAL := 33.52276;
+    rSunLatitude          : REAL := 44.578865;
+    rSunLongitude         : REAL := 33.51621;
+    rSunLongitudePrev     : REAL := 33.51621;
     iChoseTimeZone        : INT  := 14;
     iSunsetCorrectSigned  : INT  := 0;
 

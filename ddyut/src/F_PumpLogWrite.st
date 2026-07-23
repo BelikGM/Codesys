@@ -19,4 +19,12 @@ IF GVL.iPumpLogCount < 30 THEN
     GVL.iPumpLogCount := GVL.iPumpLogCount + 1;
 END_IF;
 
+(* === ДУБЛЬ НА SD === та же строка в очередь журнала ПЧ,          *)
+(* её заберёт и запишет в файл PRG_AlarmLogSD (CAA File).           *)
+IF GVL_Fountain.iSdPumpQCount < 20 THEN
+    GVL_Fountain.iSdPumpQTail := (GVL_Fountain.iSdPumpQTail MOD 20) + 1;
+    GVL_Fountain.awsSdPumpQ[GVL_Fountain.iSdPumpQTail] := sChangeText;
+    GVL_Fountain.iSdPumpQCount := GVL_Fountain.iSdPumpQCount + 1;
+END_IF;
+
 F_PumpLogWrite := TRUE;

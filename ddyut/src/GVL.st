@@ -207,6 +207,9 @@ VAR_GLOBAL
     xPumpWork      : ARRAY[1..cPumpCount] OF BOOL;
     xPumpStop      : ARRAY[1..cPumpCount] OF BOOL;
     xPumpAlarm     : ARRAY[1..cPumpCount] OF BOOL;
+    (* Версия прошивки ПЧ, определяется по температуре в FB_Pump *)
+    xPumpIsV12     : ARRAY[1..cPumpCount] OF BOOL;          // TRUE=v1.2 (T×10), FALSE=v2.0
+    sPumpFwVerText : ARRAY[1..cPumpCount] OF WSTRING(10);   // "v1.2"/"v2.0" для экрана
     xPumpReverse   : ARRAY[1..cPumpCount] OF BOOL;
     xPumpCommError : ARRAY[1..cPumpCount] OF BOOL;
     xPumpCommRaw   : ARRAY[1..cPumpCount] OF BOOL;

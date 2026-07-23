@@ -411,6 +411,7 @@ FOR i := 1 TO cPumpCount DO
         rSpeedActRpm            => rPumpSpeedActRpm[i],
         rDcVoltageV             => rPumpDcVoltageV[i],
         iTemperatureC           => iPumpTemperatureC[i],
+        xIsV12                  => xPumpIsV12[i],
         rVoltageActV            => rPumpVoltageActV[i],
         rRuntimeHours           => rPumpRuntimeHours[i],
         rAccTime_Disp            => rPumpAccTime_Disp[i],
@@ -437,6 +438,8 @@ FOR i := 1 TO cPumpCount DO
         dwPumpLampColor[i] := OVD.COLORS.OwenKeyGrey;
     END_IF;
     rPumpFreqPresetHz[i] := WORD_TO_REAL(wPumpFreqPresetRead[i]) / 100.0;
+    (* Текст версии прошивки (определена по температуре в FB_Pump) *)
+    IF xPumpIsV12[i] THEN sPumpFwVerText[i] := "v1.2"; ELSE sPumpFwVerText[i] := "v2.0"; END_IF;
 END_FOR;
 
 (* ========================================================= *)

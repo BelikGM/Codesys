@@ -18,7 +18,7 @@
 (* ============================================================ *)
 
 VAR_GLOBAL CONSTANT
-    (* === ДДЮТ:УДАЛИТЬ — шкала уровня чаши по AI1, не нужна === *)
+    (* =x`== ДДЮТ:УДАЛИТЬ — шкала уровня чаши по AI1, не нужна === *)
     (*
     cWaterRawMin : REAL := 4.0;
     cWaterRawMax : REAL := 20.0;
@@ -75,8 +75,10 @@ VAR_GLOBAL RETAIN
     (* Требуется библиотека CAA File в дереве проекта.               *)
     (* По фронту каждой аварии дописывается строка                    *)
     (*   "чч:мм дд.мм.гггг - <название>" в файл на карте.             *)
-    xAlarmLogSDEnable : BOOL := TRUE;                                    // вкл/выкл запись на SD
-    sAlarmLogPath     : STRING(80) := '/mnt/ufs/media/mmcblk0p1/alarms.log';  // путь+имя файла
+    xAlarmLogSDEnable : BOOL := TRUE;                                         // вкл/выкл запись на SD (все 3 журнала)
+    sAlarmLogPath     : STRING(80) := '/mnt/ufs/media/mmcblk0p1/alarms.log';      // журнал АВАРИЙ
+    sPumpLogPath      : STRING(80) := '/mnt/ufs/media/mmcblk0p1/pump_changes.log'; // журнал изменений ПЧ
+    sSetpointLogPath  : STRING(80) := '/mnt/ufs/media/mmcblk0p1/setpoints.log';   // журнал изменений уставок
 
     iUvNfMinRunMin : INT := 20;   // 60ЛО: не используется (выхода на УФ нет, был информационным и в ДДЮТ)
 
@@ -214,6 +216,19 @@ END_VAR
 
 
 VAR_GLOBAL
+    (* ===== ОЧЕРЕДИ SD-ЖУРНАЛОВ (ПЧ и уставки) ================== *)
+    (* Наполняют F_PumpLogWrite / F_FountainLogWrite, забирает       *)
+    (* PRG_AlarmLogSD (кольцевые буферы, 1 продюсер + 1 консьюмер,   *)
+    (* всё в одной задаче — гонок нет). Журнал аварий у POU свой.    *)
+    awsSdPumpQ    : ARRAY[1..20] OF WSTRING(120);
+    iSdPumpQHead  : INT;
+    iSdPumpQTail  : INT;
+    iSdPumpQCount : INT;
+    awsSdSetpQ    : ARRAY[1..20] OF WSTRING(120);
+    iSdSetpQHead  : INT;
+    iSdSetpQTail  : INT;
+    iSdSetpQCount : INT;
+
     (* ===== ЖУРНАЛ ИЗМЕНЕНИЙ ФОНТАНА — АКТИВНО, БЕЗ ИЗМЕНЕНИЙ === *)
     xAskClearFountainLog     : BOOL;
     iFountainLogPinEntry     : INT;

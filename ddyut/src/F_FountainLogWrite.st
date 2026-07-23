@@ -24,4 +24,12 @@ IF GVL_Fountain.iFountainLogCount < 60 THEN
     GVL_Fountain.iFountainLogCount := GVL_Fountain.iFountainLogCount + 1;
 END_IF;
 
+(* === ДУБЛЬ НА SD === та же строка в очередь журнала уставок,     *)
+(* её заберёт и запишет в файл PRG_AlarmLogSD (CAA File).           *)
+IF GVL_Fountain.iSdSetpQCount < 20 THEN
+    GVL_Fountain.iSdSetpQTail := (GVL_Fountain.iSdSetpQTail MOD 20) + 1;
+    GVL_Fountain.awsSdSetpQ[GVL_Fountain.iSdSetpQTail] := GVL_Fountain.aFountainLog[1];
+    GVL_Fountain.iSdSetpQCount := GVL_Fountain.iSdSetpQCount + 1;
+END_IF;
+
 F_FountainLogWrite := TRUE;

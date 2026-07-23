@@ -1,33 +1,29 @@
 (* ============================================================ *)
-(* PRG_AlarmLogSD — ЖУРНАЛ АВАРИЙ НА SD-КАРТУ (ДДЮТ)            *)
+(* PRG_AlarmLogSD — ЖУРНАЛЫ НА SD-КАРТУ (3 файла) — ДДЮТ        *)
 (* ============================================================ *)
-(* По ФРОНТУ появления каждой аварии дописывает в файл на SD     *)
-(* строку вида:  "чч:мм дд.мм.гггг - <название аварии>"          *)
+(* Пишет на SD три отдельных журнала (чтобы записи не путались): *)
+(*   • АВАРИИ      → sAlarmLogPath   (alarms.log)               *)
+(*   • ИЗМЕНЕНИЯ ПЧ → sPumpLogPath    (pump_changes.log)         *)
+(*   • УСТАВКИ     → sSetpointLogPath (setpoints.log)           *)
 (*                                                              *)
-(* Зачем: разгрузить RETAIN-память контроллера (журналы ПЧ и     *)
-(* уставок её почти исчерпали) — история аварий уходит на карту. *)
+(* Строка: "чч:мм дд.мм.гггг - текст" (аварии) либо готовая      *)
+(* строка журнала (ПЧ/уставки). WSTRING/UTF-16LE + BOM.         *)
 (*                                                              *)
-(* КОДИРОВКА: строки пишутся как WSTRING (UTF-16LE), в начало     *)
-(* нового файла добавляется BOM 0xFF 0xFE — так кириллица         *)
-(* корректно открывается в Блокноте/Excel на ПК.                 *)
+(* Аварии детектируются здесь (по фронту). Изменения ПЧ/уставок  *)
+(* кладут строку в GVL_Fountain.awsSdPumpQ / awsSdSetpQ прямо из *)
+(* F_PumpLogWrite / F_FountainLogWrite — здесь только пишем.     *)
 (*                                                              *)
-(* ТРЕБОВАНИЯ:                                                    *)
-(*   1. Библиотека "CAA File" в дереве проекта (тянет CAA Types). *)
-(*      Тип дескриптора — FILE.CAA.HANDLE (НЕ CAA.HANDLE!).       *)
-(*   2. SD-карта: FAT16/FAT32, разделы MBR. Путь по умолчанию     *)
-(*      /mnt/ufs/media/mmcblk0p1/  (GVL_Fountain.sAlarmLogPath).  *)
-(*                                                              *)
-(* Вызывается в PLC_PRG ПОСЛЕ PRG_Fountain (нужны iCurrentHour   *)
-(* и т.д.). ФБ CAA File асинхронные — запись идёт конечным        *)
-(* автоматом за несколько сканов, цикл ПЛК не блокируется.        *)
+(* Один автомат обслуживает 3 файла (приоритет: аварии → ПЧ →    *)
+(* уставки). ФБ CAA File асинхронные. Тип дескриптора            *)
+(* FILE.CAA.HANDLE. SD FAT16/FAT32 MBR, /mnt/ufs/media/mmcblk0p1.*)
 (* ============================================================ *)
 PROGRAM PRG_AlarmLogSD
 VAR CONSTANT
     cAlarmCnt : INT := 12;   // сколько аварий отслеживаем (ДДЮТ)
-    cQSize    : INT := 20;   // глубина очереди строк на запись
+    cQSize    : INT := 20;
 END_VAR
 VAR
-    (* --- Список аварий: текущее/прошлое состояние + названия --- *)
+    (* --- Аварии: состояние + названия --- *)
     axAlarmNow  : ARRAY[1..cAlarmCnt] OF BOOL;
     axAlarmPrev : ARRAY[1..cAlarmCnt] OF BOOL;
     awsAlarmName : ARRAY[1..cAlarmCnt] OF WSTRING(60) := [
@@ -44,29 +40,25 @@ VAR
         "Связь МВ-Д",
         "Связь МУ"];
 
-    (* --- Очередь строк (кольцевой буфер) --- *)
-    awsQueue : ARRAY[1..cQSize] OF WSTRING(100);
-    iQHead  : INT;
-    iQTail  : INT;
-    iQCount : INT;
+    (* --- Локальная очередь аварий (сырые строки) --- *)
+    awsAlarmQ : ARRAY[1..cQSize] OF WSTRING(120);
+    iAQHead : INT;  iAQTail : INT;  iAQCount : INT;
 
-    (* --- Конечный автомат записи --- *)
-    iState    : INT;   // 0=IDLE 1=OPEN 2=CREATE 6=BOM 3=WRITE 4=FLUSH 5=CLOSE 9=DROP
-    wsLineOut : WSTRING(100);
-    wBom      : WORD := 16#FEFF;   // BOM UTF-16LE (в памяти: байты FF FE)
+    (* --- Конечный автомат --- *)
+    iState     : INT;
+    wsLineOut  : WSTRING(122);
+    sActivePath : STRING(80);
+    wBom       : WORD := 16#FEFF;
 
-    (* --- Экземпляры ФБ CAA File --- *)
     fbFileOpen  : FILE.Open;
     fbFileWrite : FILE.Write;
     fbFileFlush : FILE.Flush;
     fbFileClose : FILE.Close;
     hFile       : FILE.CAA.HANDLE;
 
-    (* --- Диагностика --- *)
-    iWrittenCnt : INT;   // успешно записано строк
-    iDroppedCnt : INT;   // отброшено (переполнение очереди)
+    iWrittenCnt : INT;
+    iDroppedCnt : INT;
 
-    (* --- Рабочие --- *)
     i          : INT;
     wsTimeStamp : WSTRING(24);
     wsHH : WSTRING(4);  wsMM : WSTRING(4);
@@ -75,7 +67,7 @@ END_VAR
 
 
 (* ============================================================ *)
-(* 1. КАРТА ОТСЛЕЖИВАЕМЫХ АВАРИЙ (порядок = порядок названий)    *)
+(* 1. КАРТА АВАРИЙ (порядок = порядок названий)                 *)
 (* ============================================================ *)
 axAlarmNow[1]  := xDryRunAlarm;
 axAlarmNow[2]  := xDryRunRelayAlarm;
@@ -92,7 +84,7 @@ axAlarmNow[12] := xMU110_Error;
 
 
 (* ============================================================ *)
-(* 2. МЕТКА ВРЕМЕНИ ЭТОГО СКАНА "чч:мм дд.мм.гггг"               *)
+(* 2. МЕТКА ВРЕМЕНИ "чч:мм дд.мм.гггг"                          *)
 (* ============================================================ *)
 wsHH := INT_TO_WSTRING(iCurrentHour);   IF iCurrentHour   < 10 THEN wsHH := WCONCAT("0", wsHH); END_IF;
 wsMM := INT_TO_WSTRING(iCurrentMinute); IF iCurrentMinute < 10 THEN wsMM := WCONCAT("0", wsMM); END_IF;
@@ -104,19 +96,17 @@ wsTimeStamp := WCONCAT(wsHH, WCONCAT(":", WCONCAT(wsMM, WCONCAT(" ",
 
 
 (* ============================================================ *)
-(* 3. ДЕТЕКТ ФРОНТА КАЖДОЙ АВАРИИ → строка в очередь             *)
+(* 3. ФРОНТ АВАРИИ → строка в локальную очередь аварий          *)
 (* ============================================================ *)
 FOR i := 1 TO cAlarmCnt DO
     IF axAlarmNow[i] AND NOT axAlarmPrev[i] THEN
         IF xAlarmLogSDEnable THEN
-            IF iQCount < cQSize THEN
-                iQTail := (iQTail MOD cQSize) + 1;
-                (* строка: "чч:мм дд.мм.гггг - <название>" + CRLF *)
-                awsQueue[iQTail] := WCONCAT(wsTimeStamp,
-                                     WCONCAT(" - ", WCONCAT(awsAlarmName[i], "$R$N")));
-                iQCount := iQCount + 1;
+            IF iAQCount < cQSize THEN
+                iAQTail := (iAQTail MOD cQSize) + 1;
+                awsAlarmQ[iAQTail] := WCONCAT(wsTimeStamp, WCONCAT(" - ", awsAlarmName[i]));
+                iAQCount := iAQCount + 1;
             ELSE
-                iDroppedCnt := iDroppedCnt + 1;   // очередь полна — теряем строку
+                iDroppedCnt := iDroppedCnt + 1;
             END_IF;
         END_IF;
     END_IF;
@@ -125,56 +115,71 @@ END_FOR;
 
 
 (* ============================================================ *)
-(* 4. КОНЕЧНЫЙ АВТОМАТ ЗАПИСИ (асинхронно, CAA File)             *)
+(* 4. КОНЕЧНЫЙ АВТОМАТ: 3 файла (аварии → ПЧ → уставки)         *)
 (* ============================================================ *)
 CASE iState OF
 
-    0:  (* IDLE — если в очереди есть строка, начать запись *)
-        IF (iQCount > 0) AND xAlarmLogSDEnable THEN
-            iQHead    := (iQHead MOD cQSize) + 1;
-            wsLineOut := awsQueue[iQHead];
-            iQCount   := iQCount - 1;
-            iState    := 1;
-        END_IF;
-
-    1:  (* OPEN на дозапись *)
-        fbFileOpen(xExecute := TRUE, sFileName := sAlarmLogPath, eFileMode := FILE.MODE.MAPPD);
-        IF fbFileOpen.xDone THEN
-            hFile := fbFileOpen.hFile;
-            fbFileOpen(xExecute := FALSE);
-            iState := 3;                 // файл есть — сразу пишем строку
-        ELSIF fbFileOpen.xError THEN
-            IF fbFileOpen.eError = FILE.ERROR.NOT_EXIST THEN
-                fbFileOpen(xExecute := FALSE);
-                iState := 2;             // файла нет — создать
-            ELSE
-                fbFileOpen(xExecute := FALSE);
-                iState := 9;             // иная ошибка (карты нет и т.п.) — отбросить строку
+    0:  (* IDLE — выбрать непустую очередь *)
+        IF xAlarmLogSDEnable THEN
+            IF iAQCount > 0 THEN
+                iAQHead := (iAQHead MOD cQSize) + 1;
+                wsLineOut := WCONCAT(awsAlarmQ[iAQHead], "$R$N");
+                iAQCount := iAQCount - 1;
+                sActivePath := sAlarmLogPath;
+                iState := 1;
+            ELSIF iSdPumpQCount > 0 THEN
+                iSdPumpQHead := (iSdPumpQHead MOD 20) + 1;
+                wsLineOut := WCONCAT(awsSdPumpQ[iSdPumpQHead], "$R$N");
+                iSdPumpQCount := iSdPumpQCount - 1;
+                sActivePath := sPumpLogPath;
+                iState := 1;
+            ELSIF iSdSetpQCount > 0 THEN
+                iSdSetpQHead := (iSdSetpQHead MOD 20) + 1;
+                wsLineOut := WCONCAT(awsSdSetpQ[iSdSetpQHead], "$R$N");
+                iSdSetpQCount := iSdSetpQCount - 1;
+                sActivePath := sSetpointLogPath;
+                iState := 1;
             END_IF;
         END_IF;
 
-    2:  (* CREATE — MWRITE создаёт файл при первой записи *)
-        fbFileOpen(xExecute := TRUE, sFileName := sAlarmLogPath, eFileMode := FILE.MODE.MWRITE);
+    1:  (* OPEN на дозапись *)
+        fbFileOpen(xExecute := TRUE, sFileName := sActivePath, eFileMode := FILE.MODE.MAPPD);
         IF fbFileOpen.xDone THEN
             hFile := fbFileOpen.hFile;
             fbFileOpen(xExecute := FALSE);
-            iState := 6;                 // новый файл — сперва BOM
+            iState := 3;
+        ELSIF fbFileOpen.xError THEN
+            IF fbFileOpen.eError = FILE.ERROR.NOT_EXIST THEN
+                fbFileOpen(xExecute := FALSE);
+                iState := 2;
+            ELSE
+                fbFileOpen(xExecute := FALSE);
+                iState := 9;
+            END_IF;
+        END_IF;
+
+    2:  (* CREATE *)
+        fbFileOpen(xExecute := TRUE, sFileName := sActivePath, eFileMode := FILE.MODE.MWRITE);
+        IF fbFileOpen.xDone THEN
+            hFile := fbFileOpen.hFile;
+            fbFileOpen(xExecute := FALSE);
+            iState := 6;
         ELSIF fbFileOpen.xError THEN
             fbFileOpen(xExecute := FALSE);
             iState := 9;
         END_IF;
 
-    6:  (* WRITE_BOM — метка UTF-16LE в начало нового файла (2 байта) *)
+    6:  (* WRITE_BOM *)
         fbFileWrite(xExecute := TRUE, hFile := hFile, pBuffer := ADR(wBom), szSize := UDINT#2);
         IF fbFileWrite.xDone THEN
             fbFileWrite(xExecute := FALSE);
             iState := 3;
         ELSIF fbFileWrite.xError THEN
             fbFileWrite(xExecute := FALSE);
-            iState := 5;                 // не вышло — всё равно закрыть
+            iState := 5;
         END_IF;
 
-    3:  (* WRITE — строка WSTRING, размер = WLEN*2 байт (UTF-16LE) *)
+    3:  (* WRITE строки *)
         fbFileWrite(xExecute := TRUE, hFile := hFile,
                     pBuffer := ADR(wsLineOut), szSize := INT_TO_UDINT(WLEN(wsLineOut) * 2));
         IF fbFileWrite.xDone THEN
@@ -183,27 +188,24 @@ CASE iState OF
             iState := 4;
         ELSIF fbFileWrite.xError THEN
             fbFileWrite(xExecute := FALSE);
-            iState := 5;                 // всё равно закрыть дескриптор
+            iState := 5;
         END_IF;
 
-    4:  (* FLUSH — гарантированно сбросить буфер на карту *)
+    4:  (* FLUSH *)
         fbFileFlush(xExecute := TRUE, hFile := hFile);
         IF fbFileFlush.xDone OR fbFileFlush.xError THEN
             fbFileFlush(xExecute := FALSE);
             iState := 5;
         END_IF;
 
-    5:  (* CLOSE — закрыть дескриптор, вернуться в IDLE *)
+    5:  (* CLOSE *)
         fbFileClose(xExecute := TRUE, hFile := hFile);
         IF fbFileClose.xDone OR fbFileClose.xError THEN
             fbFileClose(xExecute := FALSE);
             iState := 0;
         END_IF;
 
-    9:  (* DROP — строку не записали (ошибка открытия), едем дальше *)
+    9:  (* DROP *)
         iState := 0;
 
 END_CASE;
-
-(* Диагностика (iWrittenCnt/iDroppedCnt/iState) — локальная; при      *)
-(* необходимости вынесу в GVL для вывода на экран.                    *)

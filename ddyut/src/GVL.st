@@ -122,6 +122,7 @@ VAR_GLOBAL
     xWr_OverCurAcc   : ARRAY[1..cPumpCount] OF BOOL := [cPumpCount(FALSE)]; // 0x0199
 
     xWr_UnlockF800   : ARRAY[1..cPumpCount] OF BOOL := [cPumpCount(FALSE)]; // 0x0320
+    xWr_ParamLock    : ARRAY[1..cPumpCount] OF BOOL := [cPumpCount(FALSE)]; // 0x0076 (F1.18=0, снятие замка, PUMP)
     xWr_Sources      : ARRAY[1..cPumpCount] OF BOOL := [cPumpCount(FALSE)]; // 0x0065/0x0066
 
     xWritePending    : ARRAY[1..cPumpCount] OF BOOL := [cPumpCount(FALSE)];
@@ -275,6 +276,7 @@ VAR_GLOBAL
     xWr_ErrDelayInit      : ARRAY[1..cPumpCount] OF BOOL := [cPumpCount(FALSE)];
 
     wPumpExtSettingsUnlockWrite : ARRAY[1..cPumpCount] OF WORD;
+    wPumpParamLockWrite         : ARRAY[1..cPumpCount] OF WORD := [cPumpCount(WORD#0)]; // F1.18=0 (снятие замка), рег 0x0076
     wPumpFactoryResetWrite      : ARRAY[1..cPumpCount] OF WORD := [cPumpCount(WORD#0)];
 
     (* ========================================================= *)

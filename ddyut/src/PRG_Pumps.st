@@ -28,6 +28,7 @@ VAR
     tonHold_Overheat : ARRAY[1..cPumpCount] OF TON;
     tonHold_OCAcc   : ARRAY[1..cPumpCount] OF TON;
     tonHold_F800    : ARRAY[1..cPumpCount] OF TON;
+    tonHold_ParamLock : ARRAY[1..cPumpCount] OF TON;   // удержание снятия замка F1.18
     tonHold_Sources : ARRAY[1..cPumpCount] OF TON;
     tonHold_DispParam : ARRAY[1..cPumpCount] OF TON;
     tonHold_ErrDelay  : ARRAY[1..cPumpCount] OF TON;
@@ -165,8 +166,13 @@ END_IF;
 (* ============================================================ *)
 FOR i := 1 TO cPumpCount DO
     IF xWritePending[i] THEN
-        wCmdSourceWrite[i]  := WORD#2;
-        wFreqSourceWrite[i] := WORD#5;
+        wCmdSourceWrite[i]  := WORD#2;   // команды RS-485 (F1.02/P0.02 = 2)
+        (* Источник частоты RS-485: PUMP F1.01=5, VL P0.03=9 *)
+        IF ePumpType[i] = E_PumpType.VL THEN
+            wFreqSourceWrite[i] := WORD#9;
+        ELSE
+            wFreqSourceWrite[i] := WORD#5;
+        END_IF;
         xWr_Sources[i]      := TRUE;
 
         xPumpRunCmd[i] := FALSE;
@@ -174,18 +180,23 @@ FOR i := 1 TO cPumpCount DO
 
         IF xPumpFullyStopped[i] THEN
             tonStopWaitAll[i](IN := FALSE);
-            xWr_UnlockF800[i]   := TRUE;
+            (* Общие базовые уставки *)
             xWr_AccTime[i]      := TRUE;
             xWr_DecTime[i]      := TRUE;
             xWr_MaxFreq[i]      := TRUE;
             xWr_MinFreq[i]      := TRUE;
             xWr_MotorCurrent[i] := TRUE;
             xWr_MotorVoltage[i] := TRUE;
-            xWr_OverCurLevel[i] := TRUE;
-            xWr_OverCurTime[i]  := TRUE;
-            xWr_OverVoltProt[i] := TRUE;
-            xWr_Overheat[i]     := TRUE;
-            xWr_OverCurAcc[i]   := TRUE;
+            IF ePumpType[i] = E_PumpType.PUMP THEN
+                (* Только PUMP: разблокировка F8.00, снятие замка F1.18, защиты *)
+                xWr_UnlockF800[i]   := TRUE;
+                xWr_ParamLock[i]    := TRUE;
+                xWr_OverCurLevel[i] := TRUE;
+                xWr_OverCurTime[i]  := TRUE;
+                xWr_OverVoltProt[i] := TRUE;
+                xWr_Overheat[i]     := TRUE;
+                xWr_OverCurAcc[i]   := TRUE;
+            END_IF;
             xWritePending[i]    := FALSE;
         ELSIF tonStopWaitAll[i].Q THEN
             xWritePending[i] := FALSE;
@@ -206,20 +217,37 @@ END_FOR;
 tWriteHoldDyn := REAL_TO_TIME((rMaxDecTime + 5.0) * 1000.0);
 
 FOR i := 1 TO cPumpCount DO
-    xNeedStopWrite[i] := xWr_MaxFreq[i] OR xWr_MinFreq[i]
-        OR xWr_MotorCurrent[i] OR xWr_MotorVoltage[i] OR xWr_OverCurLevel[i]
-        OR xWr_OverCurTime[i] OR xWr_OverVoltProt[i] OR xWr_Overheat[i]
-        OR xWr_OverCurAcc[i];
+    (* Классификация «нужен стоп» ЗАВИСИТ ОТ ТИПА (флаги X/O из РЭ):     *)
+    (*  PUMP: стоп для макс/мин.частоты, двигателя и всех защит.         *)
+    (*  VL:   стоп только для макс.частоты (P0.10=X) и двигателя         *)
+    (*        (P1.02/03/05=X). Мин.частота (P0.14=O), разгон/торм (O) —  *)
+    (*        на ходу. Защиты у VL не пишем (группа P8).                 *)
+    IF ePumpType[i] = E_PumpType.VL THEN
+        xNeedStopWrite[i] := xWr_MaxFreq[i] OR xWr_MotorCurrent[i] OR xWr_MotorVoltage[i];
+        xNoStopWrite[i]   := xWr_AccTime[i] OR xWr_DecTime[i] OR xWr_MinFreq[i];
+    ELSE
+        xNeedStopWrite[i] := xWr_MaxFreq[i] OR xWr_MinFreq[i]
+            OR xWr_MotorCurrent[i] OR xWr_MotorVoltage[i] OR xWr_OverCurLevel[i]
+            OR xWr_OverCurTime[i] OR xWr_OverVoltProt[i] OR xWr_Overheat[i]
+            OR xWr_OverCurAcc[i];
+        xNoStopWrite[i]   := xWr_AccTime[i] OR xWr_DecTime[i];
+    END_IF;
 
-    xNoStopWrite[i] := xWr_AccTime[i] OR xWr_DecTime[i];
-
-    IF xNeedStopWrite[i] OR xNoStopWrite[i] THEN
+    (* Разблокировка перед записью — только PUMP (F8.00=1 + снятие F1.18). *)
+    (* У VL этих регистров нет; пароль VL блокирует пульт, а не запись по  *)
+    (* Modbus (проверить на объекте).                                     *)
+    IF (xNeedStopWrite[i] OR xNoStopWrite[i]) AND (ePumpType[i] = E_PumpType.PUMP) THEN
         xWr_UnlockF800[i] := TRUE;
+        xWr_ParamLock[i]  := TRUE;
     END_IF;
 
     IF xNeedStopWrite[i] THEN
         wCmdSourceWrite[i]  := WORD#2;
-        wFreqSourceWrite[i] := WORD#5;
+        IF ePumpType[i] = E_PumpType.VL THEN
+            wFreqSourceWrite[i] := WORD#9;
+        ELSE
+            wFreqSourceWrite[i] := WORD#5;
+        END_IF;
         xWr_Sources[i]      := TRUE;
 
         IF NOT xPumpFullyStopped[i] THEN
@@ -251,11 +279,22 @@ END_IF;
 FOR i := 1 TO cPumpCount DO
     IF xDebugModePump[i] <> xDebugModePump_Prev[i] THEN
         IF xDebugModePump[i] THEN
+            (* Вход в отладку → управление по RS-485 *)
             wCmdSourceWrite[i]  := WORD#2;
-            wFreqSourceWrite[i] := WORD#5;
+            IF ePumpType[i] = E_PumpType.VL THEN
+                wFreqSourceWrite[i] := WORD#9;   // VL P0.03=9
+            ELSE
+                wFreqSourceWrite[i] := WORD#5;   // PUMP F1.01=5
+            END_IF;
         ELSE
-            wCmdSourceWrite[i]  := WORD#1;
-            wFreqSourceWrite[i] := WORD#3;
+            (* Выход → возврат на пульт/потенциометр *)
+            IF ePumpType[i] = E_PumpType.VL THEN
+                wCmdSourceWrite[i]  := WORD#0;   // VL P0.02=0 (пульт)
+                wFreqSourceWrite[i] := WORD#2;   // VL P0.03=2 (потенциометр)
+            ELSE
+                wCmdSourceWrite[i]  := WORD#1;   // PUMP F1.02=1 (пульт)
+                wFreqSourceWrite[i] := WORD#3;   // PUMP F1.01=3 (потенциометр)
+            END_IF;
         END_IF;
         xWr_Sources[i] := TRUE;
         xDebugModePump_Prev[i] := xDebugModePump[i];
@@ -546,6 +585,10 @@ FOR i := 1 TO cPumpCount DO
 
     tonHold_F800[i](IN := xWr_UnlockF800[i], PT := tWriteHoldDyn);
     IF tonHold_F800[i].Q THEN xWr_UnlockF800[i] := FALSE; tonHold_F800[i](IN := FALSE); END_IF;
+
+    (* Снятие замка F1.18 (0x0076←0) — держим тот же интервал, что F800 *)
+    tonHold_ParamLock[i](IN := xWr_ParamLock[i], PT := tWriteHoldDyn);
+    IF tonHold_ParamLock[i].Q THEN xWr_ParamLock[i] := FALSE; tonHold_ParamLock[i](IN := FALSE); END_IF;
 
     tonHold_Sources[i](IN := xWr_Sources[i], PT := tApplyHold);
     IF tonHold_Sources[i].Q THEN xWr_Sources[i] := FALSE; tonHold_Sources[i](IN := FALSE); END_IF;

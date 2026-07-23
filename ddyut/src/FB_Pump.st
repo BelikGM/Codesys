@@ -254,8 +254,14 @@ rAccTime_Disp           := WORD_TO_REAL(wAccTimeRawRead) / 10.0;
 rDecTime_Disp           := WORD_TO_REAL(wDecTimeRawRead) / 10.0;
 rMaxFreq_Disp           := WORD_TO_REAL(wMaxFreqRead) / rK_Freq;
 rMinFreq_Disp           := WORD_TO_REAL(wMinFreqRead) / rK_Freq;
-rMotorRatedCurrent_Disp := WORD_TO_REAL(wMotorRatedCurrentRead) / 10.0;
-rMotorRatedVoltage_Disp := WORD_TO_REAL(wMotorRatedVoltageRead) / 10.0;
+(* Двигатель — масштабы РАЗНЫЕ: PUMP F2.09/F2.10 ÷10; VL P1.02 ×1(В), P1.03 ÷100(А). *)
+IF eType = E_PumpType.VL THEN
+    rMotorRatedCurrent_Disp := WORD_TO_REAL(wMotorRatedCurrentRead) / 100.0;
+    rMotorRatedVoltage_Disp := WORD_TO_REAL(wMotorRatedVoltageRead);
+ELSE
+    rMotorRatedCurrent_Disp := WORD_TO_REAL(wMotorRatedCurrentRead) / 10.0;
+    rMotorRatedVoltage_Disp := WORD_TO_REAL(wMotorRatedVoltageRead) / 10.0;
+END_IF;
 iOverCurrentLevel_pct_Disp := WORD_TO_INT(wOverCurrentLevelRead);
 IF rMotorRatedCurrent_Disp > 0.0 THEN
     rOverCurrentLevel_A_Disp := (INT_TO_REAL(iOverCurrentLevel_pct_Disp) / 100.0)
@@ -287,12 +293,22 @@ rTmp := rMinFreq_Set;
 IF rTmp < 0.0 THEN rTmp := 0.0; ELSIF rTmp > rMaxFreq_Set THEN rTmp := rMaxFreq_Set; END_IF;
 wMinFreqWrite := REAL_TO_WORD(rTmp * rK_Freq);
 
+(* Двигатель: PUMP ×10; VL P1.02 ×1(В), P1.03 ×100(А, 0.01) *)
 rTmp := rMotorRatedVoltage_Set;
 IF rTmp < 0.0 THEN rTmp := 0.0; ELSIF rTmp > cMaxVoltage THEN rTmp := cMaxVoltage; END_IF;
-wMotorRatedVoltageWrite := REAL_TO_WORD(rTmp * 10.0);
+IF eType = E_PumpType.VL THEN
+    wMotorRatedVoltageWrite := REAL_TO_WORD(rTmp);          // VL P1.02 ×1
+ELSE
+    wMotorRatedVoltageWrite := REAL_TO_WORD(rTmp * 10.0);   // PUMP F2.09 ×10
+END_IF;
+
 rTmp := rMotorRatedCurrent_Set;
 IF rTmp < 0.1 THEN rTmp := 0.1; ELSIF rTmp > cMaxCurrent THEN rTmp := cMaxCurrent; END_IF;
-wMotorRatedCurrentWrite := REAL_TO_WORD(rTmp * 10.0);
+IF eType = E_PumpType.VL THEN
+    wMotorRatedCurrentWrite := REAL_TO_WORD(rTmp * 100.0);  // VL P1.03 ×100
+ELSE
+    wMotorRatedCurrentWrite := REAL_TO_WORD(rTmp * 10.0);   // PUMP F2.10 ×10
+END_IF;
 
 IF rMotorRatedCurrent_Set > 0.0 THEN
     iTmp := REAL_TO_INT((rOverCurrentLevel_A_Set / rMotorRatedCurrent_Set) * 100.0);

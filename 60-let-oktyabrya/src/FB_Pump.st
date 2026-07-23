@@ -240,8 +240,14 @@ rAccTime_Disp           := WORD_TO_REAL(wAccTimeRawRead) / 10.0;
 rDecTime_Disp           := WORD_TO_REAL(wDecTimeRawRead) / 10.0;
 rMaxFreq_Disp           := WORD_TO_REAL(wMaxFreqRead) / rK_Freq;
 rMinFreq_Disp           := WORD_TO_REAL(wMinFreqRead) / rK_Freq;
-rMotorRatedCurrent_Disp := WORD_TO_REAL(wMotorRatedCurrentRead) / 10.0;
-rMotorRatedVoltage_Disp := WORD_TO_REAL(wMotorRatedVoltageRead) / 10.0;
+(* Двигатель — масштабы РАЗНЫЕ: PUMP F2.09/F2.10 ÷10; VL P1.02 ×1(В), P1.03 ÷100(А). *)
+IF eType = E_PumpType.VL THEN
+    rMotorRatedCurrent_Disp := WORD_TO_REAL(wMotorRatedCurrentRead) / 100.0;
+    rMotorRatedVoltage_Disp := WORD_TO_REAL(wMotorRatedVoltageRead);
+ELSE
+    rMotorRatedCurrent_Disp := WORD_TO_REAL(wMotorRatedCurrentRead) / 10.0;
+    rMotorRatedVoltage_Disp := WORD_TO_REAL(wMotorRatedVoltageRead) / 10.0;
+END_IF;
 iOverCurrentLevel_pct_Disp := WORD_TO_INT(wOverCurrentLevelRead);
 IF rMotorRatedCurrent_Disp > 0.0 THEN
     rOverCurrentLevel_A_Disp := (INT_TO_REAL(iOverCurrentLevel_pct_Disp) / 100.0)
@@ -254,6 +260,12 @@ iOverCurAcc_Disp    := WORD_TO_INT(wOverCurAccRead);
 rOverCurrentTime_Disp := WORD_TO_REAL(wOverCurrentTimeRead) / 10.0;
 xOverVoltProtect_Disp := (wOverVoltProtectRead <> WORD#0);
 
+(* === ПОДГОТОВКА ЗНАЧЕНИЙ ЗАПИСИ ===                                 *)
+(* Общие для PUMP и VL (масштаб совпал):                              *)
+(*  Разгон/торм — ×10 (PUMP F1.07/08 шаг 0.1с; VL P0.17/18 при P0.19=1 *)
+(*  тоже 0.1с — на VL-ПЧ выставить P0.19=1!).                          *)
+(*  Макс/мин частота — ×rK_Freq (=100 у обоих: F1.05/06, P0.10/P0.14). *)
+(* РАЗНЫЕ (двигатель): PUMP ×10; VL P1.02 ×1(В), P1.03 ×100(А).         *)
 rTmp := rAccTime_Set;
 IF rTmp < cMinTime THEN rTmp := cMinTime; ELSIF rTmp > cMaxTime THEN rTmp := cMaxTime; END_IF;
 wAccTimeRawWrite := REAL_TO_WORD(rTmp * 10.0);
@@ -271,10 +283,19 @@ wMinFreqWrite := REAL_TO_WORD(rTmp * rK_Freq);
 
 rTmp := rMotorRatedVoltage_Set;
 IF rTmp < 0.0 THEN rTmp := 0.0; ELSIF rTmp > cMaxVoltage THEN rTmp := cMaxVoltage; END_IF;
-wMotorRatedVoltageWrite := REAL_TO_WORD(rTmp * 10.0);
+IF eType = E_PumpType.VL THEN
+    wMotorRatedVoltageWrite := REAL_TO_WORD(rTmp);          // VL P1.02 ×1 (целые В)
+ELSE
+    wMotorRatedVoltageWrite := REAL_TO_WORD(rTmp * 10.0);   // PUMP F2.09 ×10
+END_IF;
+
 rTmp := rMotorRatedCurrent_Set;
 IF rTmp < 0.1 THEN rTmp := 0.1; ELSIF rTmp > cMaxCurrent THEN rTmp := cMaxCurrent; END_IF;
-wMotorRatedCurrentWrite := REAL_TO_WORD(rTmp * 10.0);
+IF eType = E_PumpType.VL THEN
+    wMotorRatedCurrentWrite := REAL_TO_WORD(rTmp * 100.0);  // VL P1.03 ×100 (0.01 А)
+ELSE
+    wMotorRatedCurrentWrite := REAL_TO_WORD(rTmp * 10.0);   // PUMP F2.10 ×10
+END_IF;
 
 IF rMotorRatedCurrent_Set > 0.0 THEN
     iTmp := REAL_TO_INT((rOverCurrentLevel_A_Set / rMotorRatedCurrent_Set) * 100.0);
@@ -287,11 +308,11 @@ wOverCurrentLevelWrite := INT_TO_WORD(iTmp);
 rTmp := rOverCurrentTime_Set;
 IF rTmp < 0.0 THEN rTmp := 0.0; END_IF;
 IF rTmp > 999.9 THEN rTmp := 999.9; END_IF;
-(* ВНИМАНИЕ: блок ЗАПИСИ параметров (разгон/частоты/ток и т.п.) —      *)
-(* PUMP-специфичный (адреса F-кодов, свои масштабы). Для VL параметры  *)
-(* в P-группах (0xF0xx) с другими масштабами — запись уставок VL пока  *)
-(* НЕ реализована (отдельная задача). Для VL используется только пуск/ *)
-(* стоп + задание частоты (%) и мониторинг.                            *)
+(* Ниже — ТОЛЬКО PUMP-параметры защиты (F4.xx/F8.05): у VL защита в     *)
+(* P8-группе с иной логикой, для VL эти wOver*Write НЕ привязываются и   *)
+(* НЕ записываются (флаги xWr_Over* для VL не взводятся в PRG_Pumps).   *)
+(* Базовые уставки VL (частоты/времена/двигатель) считаются выше по     *)
+(* тем же wMax/MinFreqWrite, wAcc/DecTimeRawWrite, wMotor*Write.        *)
 wOverCurrentTimeWrite := REAL_TO_WORD(rTmp * 10.0);
 
 IF xOverVoltProtect_Set THEN wOverVoltProtectWrite := 1; ELSE wOverVoltProtectWrite := 0; END_IF;

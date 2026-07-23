@@ -302,6 +302,10 @@ VAR_GLOBAL
 
     wPumpFreqPresetRead  : ARRAY[1..cPumpCount] OF WORD;
     rPumpFreqPresetHz : ARRAY[1..cPumpCount] OF REAL;
+    (* Пересчитанные для экрана (сырые регистры отдают крупнее): *)
+    rPumpPidFeedbackDisp : ARRAY[1..cPumpCount] OF REAL;   // F0.07 ПИД, ÷10 (пульт p000.0)
+    rPumpStartFreqHz     : ARRAY[1..cPumpCount] OF REAL;   // F2.02 частота пуска, ÷1000
+    rPumpStopFreqHz      : ARRAY[1..cPumpCount] OF REAL;   // F2.03 частота остановки, ÷1000
     wPumpFreqSourceRead  : ARRAY[1..cPumpCount] OF WORD;
     wPumpCmdSourceRead   : ARRAY[1..cPumpCount] OF WORD;
     wPumpStopKeyLockRead : ARRAY[1..cPumpCount] OF WORD;

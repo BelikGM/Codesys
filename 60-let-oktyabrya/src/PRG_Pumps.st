@@ -440,6 +440,13 @@ FOR i := 1 TO cPumpCount DO
     rPumpFreqPresetHz[i] := WORD_TO_REAL(wPumpFreqPresetRead[i]) / 100.0;
     (* Текст версии прошивки (определена по температуре в FB_Pump) *)
     IF xPumpIsV12[i] THEN sPumpFwVerText[i] := "v1.2"; ELSE sPumpFwVerText[i] := "v2.0"; END_IF;
+    (* Пересчёт «сырых» регистров для экрана:                                 *)
+    (*  F0.07 ПИД — пульт "p000.0" → разрешение 0.1 → ÷10.                     *)
+    (*  F2.02/F2.03 частоты пуска/останова — по факту приходят ×1000          *)
+    (*  (0.5 Гц → регистр 500), хотя пульт показывает шаг 0.01 → ÷1000.       *)
+    rPumpPidFeedbackDisp[i] := WORD_TO_REAL(wPumpPidFeedback[i]) / 10.0;
+    rPumpStartFreqHz[i]     := WORD_TO_REAL(wPumpStartFreqRead[i]) / 1000.0;
+    rPumpStopFreqHz[i]      := WORD_TO_REAL(wPumpStopFreqRead[i]) / 1000.0;
 END_FOR;
 
 (* ========================================================= *)

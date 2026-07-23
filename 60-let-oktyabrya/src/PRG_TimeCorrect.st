@@ -1,37 +1,37 @@
 (* ============================================================ *)
 (* PRG_TimeCorrect — КОРРЕКЦИЯ УХОДА СИСТЕМНЫХ ЧАСОВ (RTC)      *)
 (* ============================================================ *)
-(* RTC контроллера уходит вперёд ~15с/сутки. Раз в сутки, в       *)
-(* заданный час (iTimeDriftCorrHour, по умолч. 03:00), отводим    *)
-(* RTC назад на iTimeDriftCorrSec секунд (по умолч. 15).          *)
+(* RTC контроллера уходит вперёд. Один раз в НОВЫЙ календарный    *)
+(* день (как только сменился iCurrentDay) отводим RTC назад на    *)
+(* iTimeDriftCorrSec секунд. Час/минута НЕ важны — сработает при   *)
+(* первом же скане нового дня, даже если питание пропадало.       *)
 (*                                                              *)
-(* Ставить время из приложения ПЛК МОЖНО — это не защищённая      *)
-(* операция (оператор так же правит RTC вручную с экрана).        *)
+(* iLastCorrDay — RETAIN: переживает перезагрузку, поэтому после   *)
+(* рестарта в тот же день коррекция повторно НЕ сработает          *)
+(* (ровно 1 раз в сутки, а не на каждый ребут).                  *)
 (*                                                              *)
-(* Вызывается в PLC_PRG ПОСЛЕ PRG_Fountain — использует           *)
-(* iCurrentHour/iCurrentMinute/iCurrentDay, посчитанные там.      *)
+(* Ставить время из приложения ПЛК МОЖНО — не защищённая          *)
+(* операция. Вызывается в PLC_PRG ПОСЛЕ PRG_Fountain.             *)
 (*                                                              *)
 (* Сигнатура (подтверждена по библиотеке SysTimeRtc проекта):     *)
-(*   FUNCTION SysTimeRtcSet : RTS_IEC_RESULT                      *)
-(*     ulTimestamp : DWORD  (Seconds since 1.1.1970 00:00 UTC)    *)
-(*   → вызов SysTimeRtcSet(dwUtcRaw) корректен.                   *)
+(*   SysTimeRtcSet(ulTimestamp : DWORD) : RTS_IEC_RESULT          *)
+(*   (Seconds since 1.1.1970 00:00 UTC).                          *)
 (* ============================================================ *)
 PROGRAM PRG_TimeCorrect
+VAR RETAIN
+    iLastCorrDay : INT := -1;   // день месяца последней коррекции (RETAIN — 1 раз в сутки, переживает ребут)
+END_VAR
 VAR
-    dwUtcRaw     : DWORD;
-    rtcRes       : DWORD;
-    iLastCorrDay : INT := -1;   // день месяца последней коррекции (защита "1 раз в сутки")
-    xDoCorrect   : BOOL;
+    dwUtcRaw   : DWORD;
+    rtcRes     : DWORD;
+    xDoCorrect : BOOL;
 END_VAR
 
 (* --- Когда корректировать --- *)
 xDoCorrect := FALSE;
 
-(* Авто: включено, наступил нужный час, минута 0, сегодня ещё не корректировали *)
-IF xTimeDriftCorrEnable
-   AND (iCurrentHour = iTimeDriftCorrHour)
-   AND (iCurrentMinute = 0)
-   AND (iCurrentDay <> iLastCorrDay) THEN
+(* Авто: включено И наступил новый календарный день *)
+IF xTimeDriftCorrEnable AND (iCurrentDay <> iLastCorrDay) THEN
     xDoCorrect := TRUE;
 END_IF;
 
@@ -52,3 +52,7 @@ IF xDoCorrect THEN
     sTimeDriftLast      := sCurrentDateStr;   // дата последней коррекции для экрана
     xTimeDriftCorrNow   := FALSE;             // гасим ручной триггер
 END_IF;
+
+(* iTimeDriftCorrHour больше НЕ используется (оставлен в GVL на случай *)
+(* возврата к привязке по часу). iTimeDriftCorrSec — на сколько секунд *)
+(* отводить (по умолч. 15; поставь 20 если нужно).                     *)

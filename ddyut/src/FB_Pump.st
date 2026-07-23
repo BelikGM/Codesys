@@ -1,5 +1,5 @@
 (* ============================================================ *)
-(* FB_Pump — управление одним ПЧ ELHART (PUMP/MINI) по Modbus  *)
+(* FB_Pump — управление одним ПЧ ELHART (PUMP или VL) по Modbus *)
 (* Проект ДДЮТ (на основе Fontan_V1 / Саки Пруд).               *)
 (* === ИЗМЕНЕНО (автоопределение версии по температуре) ===      *)
 (* Разные прошивки EMD-PUMP хранят температуру (F0.06=рег 0x0006) *)
@@ -113,14 +113,15 @@ END_VAR
 
 (* ========================================================= *)
 (* 1. Коэффициент пересчёта частоты                          *)
-(* PUMP: 0,01 Гц → k=100 | MINI: 0,1 Гц → k=10               *)
+(* PUMP: 0,01 Гц → k=100 | VL (EMD-VL/VH): D0.00/01 тоже 0,01 → k=100 *)
+(* MINI удалён (не было в проекте — была ошибка типа).                *)
 (* ========================================================= *)
 IF eType = E_PumpType.PUMP THEN
     rK_Freq   := 100.0;
     sTypeText := "EMD-PUMP";
 ELSE
-    rK_Freq   := 10.0;
-    sTypeText := "EMD-MINI v2.1";
+    rK_Freq   := 100.0;
+    sTypeText := "EMD-VL";
 END_IF;
 
 
@@ -131,12 +132,20 @@ rFreqLim := rFreqSetHz;
 IF rFreqLim < cMinFreq THEN rFreqLim := cMinFreq; END_IF;
 IF rFreqLim > cMaxFreq THEN rFreqLim := cMaxFreq; END_IF;
 
-IF xRunCmd THEN
-    wCmd  := 16#000A;
+(* Регистры/коды разные:                                             *)
+(*  PUMP: команда 000A пуск/0009 стоп → 0x2000; частота Гц×100 → 0x2001.*)
+(*  VL:   команда 0001 вперёд/0005 стоп выбегом → 0x2000;              *)
+(*        задание в % от макс.частоты → 0x1000 (0x2710=100%).          *)
+IF eType = E_PumpType.PUMP THEN
+    IF xRunCmd THEN wCmd := 16#000A; ELSE wCmd := 16#0009; END_IF;
     wFreq := REAL_TO_WORD(rFreqLim * rK_Freq);
-ELSE
-    wCmd  := 16#0009;
-    wFreq := REAL_TO_WORD(rFreqLim * rK_Freq);
+ELSE  // VL
+    IF xRunCmd THEN wCmd := 16#0001; ELSE wCmd := 16#0005; END_IF;
+    IF rMaxFreq_Set > 0.0 THEN
+        wFreq := REAL_TO_WORD(rFreqLim / rMaxFreq_Set * 10000.0);   // % ×100
+    ELSE
+        wFreq := 0;
+    END_IF;
 END_IF;
 
 
@@ -170,9 +179,10 @@ CASE eType OF
         ELSE
             xStop := TRUE; sState := "Стоп";
         END_IF;
-    E_PumpType.MINI:
-        xReverse := (wStatus AND 16#0001) <> 0;
-        IF (wStatus AND 16#0002) <> 0 THEN
+    E_PumpType.VL:
+        (* Статус из регистра 0x3000: 1 вперёд, 2 назад, 3 стоп *)
+        xReverse := (wStatus = 2);
+        IF (wStatus = 1) OR (wStatus = 2) THEN
             xRun := TRUE;
             IF xReverse THEN sState := "Работа (реверс)"; ELSE sState := "Работа"; END_IF;
         ELSE
@@ -193,9 +203,9 @@ CASE eType OF
         ELSE
             sFaultText := "Нет ошибок";
         END_IF;
-    E_PumpType.MINI:
-        iFaultCode := WORD_TO_INT(wFaultReg);
-        IF (iFaultCode > 63) AND ((iFaultCode < 88) OR (iFaultCode > 91)) THEN
+    E_PumpType.VL:
+        (* Код ошибки из регистра 0x8000: 0 = нет ошибок *)
+        IF wFaultReg <> 0 THEN
             xAlarm := TRUE; xRun := FALSE; xStop := FALSE; sState := "Авария";
             sFaultText := F_FaultCodeToText(eType, wFaultReg);
         ELSE
@@ -207,24 +217,37 @@ END_CASE;
 (* ========================================================= *)
 (* 6. ЧТЕНИЕ реальных значений из ПЧ → _Disp (для показа)    *)
 (* ========================================================= *)
-rFreqSetActHz := WORD_TO_REAL(wFreqSetRead) / rK_Freq;
+rFreqSetActHz := WORD_TO_REAL(wFreqSetRead) / rK_Freq;   // ÷100 у обоих
 rFreqActHz    := WORD_TO_REAL(wFreqActual)  / rK_Freq;
-rCurrentActA  := WORD_TO_REAL(wCurrentActual) / 10.0;
 rSpeedActRpm  := WORD_TO_REAL(wSpeedActual);
-rDcVoltageV   := WORD_TO_REAL(wDcVoltage) / 10.0;
+rDcVoltageV   := WORD_TO_REAL(wDcVoltage) / 10.0;         // ÷10 у обоих
 
-(* === ИЗМЕНЕНО === Автоопределение версии по температуре.      *)
-(* Раньше было жёстко «целые °C» (для ДДЮТ-прошивки), а на Саки  *)
-(* тот же регистр ×10 — приходилось править вручную. Теперь      *)
-(* определяем сами: регистр ≥100 → v1.2 (×10, делим), иначе v2.0.*)
-xIsV12 := (wTemperature >= 100);   // ≥100 → v1.2 (регистр ×10)
-IF xIsV12 THEN
-    iTemperatureC := WORD_TO_INT(wTemperature) / 10;   // v1.2: ×10 → °C
+(* Ток и выходное напряжение масштабируются ПО-РАЗНОМУ:              *)
+(*  PUMP: ток F0.03 ÷10, вых.напряж F0.09 ÷10.                       *)
+(*  VL:   ток D0.04 ÷100 (модели <55 кВт), вых.напряж D0.03 ЦЕЛЫЕ В. *)
+IF eType = E_PumpType.VL THEN
+    rCurrentActA := WORD_TO_REAL(wCurrentActual) / 100.0;
+    rVoltageActV := WORD_TO_REAL(wVoltageActual);
 ELSE
-    iTemperatureC := WORD_TO_INT(wTemperature);         // v2.0: целые °C
+    rCurrentActA := WORD_TO_REAL(wCurrentActual) / 10.0;
+    rVoltageActV := WORD_TO_REAL(wVoltageActual) / 10.0;
 END_IF;
 
-rVoltageActV  := WORD_TO_REAL(wVoltageActual) / 10.0;
+(* === Автоопределение версии по температуре (ТОЛЬКО PUMP) ===        *)
+(* Разные прошивки EMD-PUMP: регистр ≥100 → v1.2 (×10, делим),        *)
+(* иначе v2.0 (целые °C). У VL температуры в группе D0 нет → 0.       *)
+IF eType = E_PumpType.PUMP THEN
+    xIsV12 := (wTemperature >= 100);
+    IF xIsV12 THEN
+        iTemperatureC := WORD_TO_INT(wTemperature) / 10;   // v1.2: ×10 → °C
+    ELSE
+        iTemperatureC := WORD_TO_INT(wTemperature);         // v2.0: целые °C
+    END_IF;
+ELSE
+    xIsV12        := FALSE;
+    iTemperatureC := 0;
+END_IF;
+
 rRuntimeHours := WORD_TO_REAL(wRuntimeHoursRaw);
 
 rAccTime_Disp           := WORD_TO_REAL(wAccTimeRawRead) / 10.0;
@@ -281,10 +304,12 @@ wOverCurrentLevelWrite := INT_TO_WORD(iTmp);
 
 rTmp := rOverCurrentTime_Set;
 IF rTmp < 0.0 THEN rTmp := 0.0; END_IF;
-CASE eType OF
-    E_PumpType.PUMP: IF rTmp > 999.9 THEN rTmp := 999.9; END_IF;
-    E_PumpType.MINI: IF rTmp > 5.0 THEN rTmp := 5.0; END_IF;
-END_CASE;
+IF rTmp > 999.9 THEN rTmp := 999.9; END_IF;
+(* ВНИМАНИЕ: блок ЗАПИСИ уставок — PUMP-специфичный (адреса F-кодов,   *)
+(* свои масштабы). Для VL параметры в P-группах (0xF0xx) с другими     *)
+(* масштабами — запись уставок VL пока НЕ реализована (отдельная       *)
+(* задача). Для VL используется пуск/стоп + задание частоты (%) и      *)
+(* мониторинг.                                                         *)
 wOverCurrentTimeWrite := REAL_TO_WORD(rTmp * 10.0);
 
 IF xOverVoltProtect_Set THEN wOverVoltProtectWrite := 1; ELSE wOverVoltProtectWrite := 0; END_IF;

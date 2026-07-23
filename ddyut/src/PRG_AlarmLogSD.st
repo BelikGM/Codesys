@@ -1,5 +1,5 @@
 (* ============================================================ *)
-(* PRG_AlarmLogSD — ЖУРНАЛ АВАРИЙ НА SD-КАРТУ                   *)
+(* PRG_AlarmLogSD — ЖУРНАЛ АВАРИЙ НА SD-КАРТУ (ДДЮТ)            *)
 (* ============================================================ *)
 (* По ФРОНТУ появления каждой аварии дописывает в файл на SD     *)
 (* строку вида:  "чч:мм дд.мм.гггг - <название аварии>"          *)
@@ -23,7 +23,7 @@
 (* ============================================================ *)
 PROGRAM PRG_AlarmLogSD
 VAR CONSTANT
-    cAlarmCnt : INT := 11;   // сколько аварий отслеживаем
+    cAlarmCnt : INT := 12;   // сколько аварий отслеживаем (ДДЮТ)
     cQSize    : INT := 20;   // глубина очереди строк на запись
 END_VAR
 VAR
@@ -33,13 +33,14 @@ VAR
     awsAlarmName : ARRAY[1..cAlarmCnt] OF WSTRING(60) := [
         "Сухой ход",
         "Сухой ход реле",
-        "Клапан добора реле",
-        "Насосы фонтана реле",
-        "Подсветка реле",
-        "Фильтрация реле (ручной режим)",
+        "Добор — исчерпаны попытки",
+        "Альгицид (защ.таймер)",
+        "Биопаг (защ.таймер)",
+        "pH реле",
+        "Альгицид реле",
+        "Биопаг реле",
         "Связь ПЧ1",
         "Связь ПЧ2",
-        "Связь ПЧ3",
         "Связь МВ-Д",
         "Связь МУ"];
 
@@ -78,15 +79,16 @@ END_VAR
 (* ============================================================ *)
 axAlarmNow[1]  := xDryRunAlarm;
 axAlarmNow[2]  := xDryRunRelayAlarm;
-axAlarmNow[3]  := xDamperRelayAlarm;
-axAlarmNow[4]  := xPumpRelayAlarm;
-axAlarmNow[5]  := xLightRelayAlarm;
-axAlarmNow[6]  := xNfManualRelayAlarm;
-axAlarmNow[7]  := xPumpCommError[1];
-axAlarmNow[8]  := xPumpCommError[2];
-axAlarmNow[9]  := xPumpCommError[3];
-axAlarmNow[10] := xMV110_Error;
-axAlarmNow[11] := xMU110_Error;
+axAlarmNow[3]  := xRefillAttemptsAlarm;
+axAlarmNow[4]  := xAlgAlarm;
+axAlarmNow[5]  := xBioAlarm;
+axAlarmNow[6]  := xPhRelayAlarm;
+axAlarmNow[7]  := xAlgRelayAlarm;
+axAlarmNow[8]  := xBioRelayAlarm;
+axAlarmNow[9]  := xPumpCommError[1];
+axAlarmNow[10] := xPumpCommError[2];
+axAlarmNow[11] := xMV110_Error;
+axAlarmNow[12] := xMU110_Error;
 
 
 (* ============================================================ *)

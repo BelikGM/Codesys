@@ -59,6 +59,19 @@ DO14 = Альгицид
 DO15 = Биопаг
 DO16 = pH
 
---- ПОРЯДОК ВЫЗОВА В PLC_PRG ---
+--- ПОРЯДОК ВЫЗОВА В PLC_PRG (изменён 23.07.2026) ---
 PRG_IO() → PRG_Fountain() → PRG_Pumps() → PRG_Errors()
+  → PRG_TimeCorrect() → PRG_AlarmLogSD() → PRG_IO_Write()
+Сборка маски выходов вынесена из PRG_IO в новый PRG_IO_Write и
+вызывается ПОСЛЕ PRG_Fountain — убрана задержка выходов на 1 скан.
+
+--- ИЗМЕНЕНИЯ 23.07.2026 ---
+- Лампа аварии DO2 горит ровно (мигание xBlinkFast отключено).
+- PRG_TimeCorrect: раз в сутки (03:00) отвод RTC на 15с назад
+  (уход часов вперёд). SysTimeRtcSet(ulTimestamp:DWORD) подтверждён.
+- PRG_AlarmLogSD: журнал 12 аварий на SD-карту
+  /mnt/ufs/media/mmcblk0p1/ через CAA File (тип FILE.CAA.HANDLE),
+  строки WSTRING/UTF-16LE + BOM. Требует библиотеку CAA File и
+  карту FAT32/MBR. Не протестировано на объекте.
+- Порядок вызова: см. выше (PRG_IO_Write в конце).
 ```

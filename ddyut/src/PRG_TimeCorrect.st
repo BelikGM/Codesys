@@ -11,12 +11,10 @@
 (* Вызывается в PLC_PRG ПОСЛЕ PRG_Fountain — использует           *)
 (* iCurrentHour/iCurrentMinute/iCurrentDay, посчитанные там.      *)
 (*                                                              *)
-(* ⚠️ ПРОВЕРЬ сигнатуру SysTimeRtcSet в Input Assistant проекта:  *)
-(*   встречается два варианта:                                    *)
-(*     rtcRes := SysTimeRtcSet(dwUtcRaw);                (1 арг)  *)
-(*     rtcRes := SysTimeRtcSet(dwUtcRaw, pResult := rtcRes);      *)
-(*   ниже стоит однопараметрный вариант — если библиотека требует *)
-(*   pResult, допиши второй аргумент.                             *)
+(* Сигнатура (подтверждена по библиотеке SysTimeRtc проекта):     *)
+(*   FUNCTION SysTimeRtcSet : RTS_IEC_RESULT                      *)
+(*     ulTimestamp : DWORD  (Seconds since 1.1.1970 00:00 UTC)    *)
+(*   → вызов SysTimeRtcSet(dwUtcRaw) корректен.                   *)
 (* ============================================================ *)
 PROGRAM PRG_TimeCorrect
 VAR

@@ -40,5 +40,3 @@ ELSE
 END_IF;
 
 TimeZone := UDINT_TO_REAL(idx) - 11.0;
-
-END_FUNCTION_BLOCK

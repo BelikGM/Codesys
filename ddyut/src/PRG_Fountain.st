@@ -1280,6 +1280,27 @@ END_IF;
 
 
 (* ============================================================ *)
+(* 15б. ОПАСНАЯ СИТУАЦИЯ: СУХОЙ ХОД + РУЧНАЯ ФИЛЬТРАЦИЯ          *)
+(* ============================================================ *)
+(* Перенесено из «60 лет». Ничего не блокируем — только            *)
+(* напоминание. Показ по фронту появления, кнопка "ОК" на          *)
+(* диалоге выполняет ОДНУ строку:                                  *)
+(*   GVL_Fountain.xConfirmDangerDialog := TRUE;                     *)
+(* В ДДЮТ ручной режим фильтрации — экранный xManualFilter          *)
+(* (в 60ЛО был физический тумблер DI12 xNfManualSwitch).            *)
+xDangerCondition := xDryRunAlarm AND xManualFilter;
+
+IF xDangerCondition AND NOT xDangerCondition_Prev THEN
+    xShowDangerDialog := TRUE;
+END_IF;
+IF xConfirmDangerDialog THEN
+    xShowDangerDialog    := FALSE;
+    xConfirmDangerDialog := FALSE;
+END_IF;
+xDangerCondition_Prev := xDangerCondition;
+
+
+(* ============================================================ *)
 (* 16. ИТОГОВЫЙ СИГНАЛ АЛЬГИЦИДА (DO14) + авария реле            *)
 (* ============================================================ *)
 xAlgOutput := (xAlgRunCmd OR xAlgManualTimeRun OR xAlgManualRun) AND NOT xFiltrationBlock;

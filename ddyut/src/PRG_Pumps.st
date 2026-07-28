@@ -365,7 +365,7 @@ FOR i := 1 TO cPumpCount DO
     xDebugForPump   := xDebugModePump[i] OR xDebugModeAll;
     wActualFaultReg := wPumpFaultReg[i];
 
-    Pump[i](
+    GVL.Pump[i](
         eType                  := ePumpType[i],
         xDebugMode             := xDebugForPump,
         xCommError             := xPumpCommError[i],

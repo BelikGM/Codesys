@@ -709,7 +709,7 @@ VAR_GLOBAL
     xNfPermission     : BOOL;
     xBlokDozacii      : BOOL;
     xFiltrationBlock  : BOOL;        // === ДДЮТ: всегда FALSE (нет аварийных уровней по см) ===
-
+    
     (* === ДДЮТ:УДАЛИТЬ — двухуровневая блокировка по см ===== *)
     (*
     xAllSystemsBlock  : BOOL;
@@ -986,6 +986,14 @@ VAR_GLOBAL
     xUvContactor      : BOOL;        // ← DI4 (контактор УФ)
     xFilter1Contactor : BOOL;        // ← DI5 (контактор фильтр.насоса, для наработки НФ)
     xManualFilter     : BOOL;        // ручное вкл фильтрации с экрана
+
+    (* ===== ОПАСНАЯ СИТУАЦИЯ: СУХОЙ ХОД + РУЧНАЯ ФИЛЬТРАЦИЯ ===== *)
+    (* Перенесено из «60 лет». В ДДЮТ ручной режим — экранный        *)
+    (* xManualFilter (не физический тумблер, как DI12 в 60ЛО).       *)
+    xDangerCondition       : BOOL;   // = xDryRunAlarm AND xManualFilter, живая
+    xDangerCondition_Prev  : BOOL;   // для детекта фронта появления
+    xShowDangerDialog      : BOOL;   // видимость диалога — привязать к элементу экрана
+    xConfirmDangerDialog   : BOOL;   // кнопка "ОК" пишет сюда := TRUE
     (* === ДДЮТ:УДАЛИТЬ — не используются на ДДЮТ === *)
     (*
     xFilter2Contactor : BOOL;

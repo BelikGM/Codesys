@@ -57,5 +57,3 @@ END_IF;
 
 (* Линейное преобразование: индекс 0..23 → смещение -11..+12 *)
 TimeZone := UDINT_TO_REAL(idx) - 11.0;
-
-END_FUNCTION_BLOCK

@@ -321,11 +321,11 @@ wOverCurrentLevelWrite := INT_TO_WORD(iTmp);
 rTmp := rOverCurrentTime_Set;
 IF rTmp < 0.0 THEN rTmp := 0.0; END_IF;
 IF rTmp > 999.9 THEN rTmp := 999.9; END_IF;
-(* ВНИМАНИЕ: блок ЗАПИСИ уставок — PUMP-специфичный (адреса F-кодов,   *)
-(* свои масштабы). Для VL параметры в P-группах (0xF0xx) с другими     *)
-(* масштабами — запись уставок VL пока НЕ реализована (отдельная       *)
-(* задача). Для VL используется пуск/стоп + задание частоты (%) и      *)
-(* мониторинг.                                                         *)
+(* Ниже — ТОЛЬКО PUMP-параметры защиты (F4.xx/F8.05): у VL защита в     *)
+(* P8-группе с иной логикой, для VL эти wOver*Write НЕ привязываются и   *)
+(* НЕ записываются (флаги xWr_Over* для VL не взводятся в PRG_Pumps).   *)
+(* Базовые уставки VL (частоты/времена/двигатель) считаются выше по     *)
+(* тем же wMax/MinFreqWrite, wAcc/DecTimeRawWrite, wMotor*Write.        *)
 wOverCurrentTimeWrite := REAL_TO_WORD(rTmp * 10.0);
 
 IF xOverVoltProtect_Set THEN wOverVoltProtectWrite := 1; ELSE wOverVoltProtectWrite := 0; END_IF;

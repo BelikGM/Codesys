@@ -248,7 +248,14 @@ ELSE
     iTemperatureC := 0;
 END_IF;
 
-rRuntimeHours := WORD_TO_REAL(wRuntimeHoursRaw);
+(* Наработка: PUMP — целые ЧАСЫ; VL — D0.26 в МИНУТАХ ×10 (÷10).       *)
+(* Переменная одна (rRuntimeHours), единица разная — на экране подпись  *)
+(* «ч»/«мин» переключать по типу ПЧ.                                    *)
+IF eType = E_PumpType.VL THEN
+    rRuntimeHours := WORD_TO_REAL(wRuntimeHoursRaw) / 10.0;   // VL: минуты
+ELSE
+    rRuntimeHours := WORD_TO_REAL(wRuntimeHoursRaw);          // PUMP: часы
+END_IF;
 
 rAccTime_Disp           := WORD_TO_REAL(wAccTimeRawRead) / 10.0;
 rDecTime_Disp           := WORD_TO_REAL(wDecTimeRawRead) / 10.0;

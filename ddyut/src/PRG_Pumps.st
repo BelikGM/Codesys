@@ -323,7 +323,15 @@ END_IF;
 
 FOR i := 1 TO cPumpCount DO
     IF xFactoryResetPump[i] THEN
-        wPumpFactoryResetWrite[i] := WORD#8;
+        (* Значение сброса РАЗНОЕ по типу: PUMP F1.17=8, VL PP.01=1.        *)
+        (* Регистр задаётся в ДЕРЕВЕ Modbus (триггер xFactoryResetPump[i]): *)
+        (*   PUMP-узел → 0x0075 (F1.17); VL-узел → регистр PP.01            *)
+        (*   (адрес PP-группы в РЭ не опубликован — уточнить у поставщика).  *)
+        IF ePumpType[i] = E_PumpType.VL THEN
+            wPumpFactoryResetWrite[i] := WORD#1;
+        ELSE
+            wPumpFactoryResetWrite[i] := WORD#8;
+        END_IF;
     ELSE
         wPumpFactoryResetWrite[i] := WORD#0;
     END_IF;

@@ -196,6 +196,10 @@ VAR_GLOBAL RETAIN
     (* Раз в сутки в заданный час вычитаем iTimeDriftCorrSec секунд  *)
     (* из RTC. Вся логика — в PRG_TimeCorrect. Все параметры RETAIN, *)
     (* правятся с экрана.                                            *)
+    (* ⚠️ 03.08.2026: SysTimeRtcSet на СПК пишет в МЕСТНОМ времени,   *)
+    (* а SysTimeRtcGet отдаёт UTC → каждая запись теряла 3 часа.      *)
+    (* Компенсация перекоса и самопроверка — в PRG_TimeCorrect        *)
+    (* (RETAIN diRtcSetBias). Подробности — в шапке того файла.       *)
     xTimeDriftCorrEnable : BOOL := TRUE;   // включить авто-коррекцию
     iTimeDriftCorrSec    : INT  := 15;     // на сколько секунд отвести RTC назад
     iTimeDriftCorrHour   : INT  := 3;      // в котором часу (местное) применять, 0..23

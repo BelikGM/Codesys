@@ -199,7 +199,7 @@ VAR_GLOBAL RETAIN
     (* ⚠️ 03.08.2026: SysTimeRtcSet на СПК пишет в МЕСТНОМ времени,   *)
     (* а SysTimeRtcGet отдаёт UTC → каждая запись теряла 3 часа.      *)
     (* Компенсация перекоса и самопроверка — в PRG_TimeCorrect        *)
-    (* (RETAIN diRtcSetBias). Подробности — в шапке того файла.       *)
+    (* (diRtcSetBias, НЕ retain). Подробности — в шапке файла.       *)
     xTimeDriftCorrEnable : BOOL := TRUE;   // включить авто-коррекцию
     iTimeDriftCorrSec    : INT  := 15;     // на сколько секунд отвести RTC назад
     iTimeDriftCorrHour   : INT  := 3;      // в котором часу (местное) применять, 0..23

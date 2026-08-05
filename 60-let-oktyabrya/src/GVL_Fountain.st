@@ -58,7 +58,7 @@ VAR_GLOBAL RETAIN
 
     iTimeZoneOffsetSec : INT := 10800;   // смещение часового пояса от UTC, сек
 
-    (* === КОРРЕКЦИЯ УХОДА ЧАСОВ === RTC уходит вперёд ~15с/сутки. *)
+    (* === КОРРЕКЦИЯ УХОДА ЧАСОВ === RTC уходит вперёд ~5с/сутки.  *)
     (* Раз в сутки в заданный час вычитаем iTimeDriftCorrSec секунд  *)
     (* из RTC. Вся логика — в PRG_TimeCorrect. Все параметры RETAIN, *)
     (* правятся с экрана.                                            *)
@@ -67,7 +67,7 @@ VAR_GLOBAL RETAIN
     (* Компенсация перекоса и самопроверка — в PRG_TimeCorrect        *)
     (* (diRtcSetBias, НЕ retain). Подробности — в шапке файла.       *)
     xTimeDriftCorrEnable : BOOL := TRUE;   // включить авто-коррекцию
-    iTimeDriftCorrSec    : INT  := 15;     // на сколько секунд отвести RTC назад
+    iTimeDriftCorrSec    : INT  := 5;      // на сколько секунд отвести RTC назад
     iTimeDriftCorrHour   : INT  := 3;      // в котором часу (местное) применять, 0..23
     xTimeDriftCorrNow    : BOOL := FALSE;  // ручной триггер "скорректировать сейчас"
     iTimeDriftCorrCount  : INT;            // счётчик выполненных коррекций (диагностика)

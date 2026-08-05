@@ -1,29 +1,54 @@
 (* ============================================================ *)
-(* PRG_AlarmLogSD — ЖУРНАЛЫ НА SD-КАРТУ (3 файла)              *)
+(* PRG_AlarmLogSD — ЖУРНАЛЫ НА SD-КАРТУ (3 файла В МЕСЯЦ)        *)
 (* ============================================================ *)
 (* Пишет на SD три отдельных журнала (чтобы записи не путались): *)
-(*   • АВАРИИ     → sAlarmLogPath   (alarms.log)                 *)
-(*   • ИЗМЕНЕНИЯ ПЧ→ sPumpLogPath    (pump_changes.log)          *)
-(*   • УСТАВКИ    → sSetpointLogPath (setpoints.log)             *)
+(*   • АВАРИИ     → sAlarmLogPath   (alarms-MM-YYYY.log)         *)
+(*   • ИЗМЕНЕНИЯ ПЧ→ sPumpLogPath    (pump_changes-MM-YYYY.log)  *)
+(*   • УСТАВКИ    → sSetpointLogPath (setpoints-MM-YYYY.log)     *)
+(*                                                              *)
+(* === НОВОЕ: ПОМЕСЯЧНЫЕ ФАЙЛЫ ==============================    *)
+(* Имя файла содержит месяц и год, поэтому 1-го числа нового     *)
+(* месяца путь меняется САМ, и старый автомат (OPEN → если нет   *)
+(* файла, то CREATE + BOM) создаёт новый файл без единой строчки *)
+(* дополнительной логики. Отдельного «переключателя месяца» нет  *)
+(* специально: любая пропущенная граница (ПЛК был выключен,      *)
+(* карту вынимали) отрабатывается сама собой при первой записи.  *)
+(*                                                              *)
+(* === НОВОЕ: КОНТРОЛЬ МЕСТА ================================    *)
+(* FB_SdSpaceGuard раз в tSdCheckPeriod (по умолчанию час), при  *)
+(* смене месяца и после серии неудачных записей удаляет три файла *)
+(* самого старого месяца, если журналы переросли квоту:            *)
+(*     квота = ёмкость карты − 100 МБ резерва − чужие файлы        *)
+(* Файл текущего месяца удалить нельзя ни при каких условиях.      *)
+(*                                                               *)
+(* ЁМКОСТЬ КАРТЫ ОПРЕДЕЛЯЕТСЯ АВТОМАТИЧЕСКИ — FB_SdCardSize        *)
+(* читает размер раздела у ядра (/sys/block/...). Номинал из       *)
+(* выпадающего списка на экране (iSdCardSize) — только запасной    *)
+(* вариант, если автоопределение не сработало. Кнопок нет.         *)
 (*                                                              *)
 (* Строка: "чч:мм дд.мм.гггг - текст" (для аварий) либо готовая  *)
 (* строка журнала (для ПЧ/уставок). WSTRING/UTF-16LE + BOM.     *)
 (*                                                              *)
-(* Аварии детектируются здесь (по фронту). Изменения ПЧ/уставок  *)
+(* Аварии детектируются здесь СТРОГО ПО ФРОНТУ FALSE→TRUE: пока  *)
+(* авария висит, повторных записей нет. Изменения ПЧ/уставок     *)
 (* кладут строку в глобальные очереди GVL_Fountain.awsSdPumpQ /  *)
 (* awsSdSetpQ прямо из F_PumpLogWrite / F_FountainLogWrite —      *)
 (* здесь мы их только забираем и пишем в файл.                   *)
 (*                                                              *)
 (* Один конечный автомат обслуживает по очереди все три файла    *)
 (* (приоритет: аварии → ПЧ → уставки). ФБ CAA File асинхронные.  *)
+(* Пока сторож места занят (fbGuard.xBusy) — новая строка не     *)
+(* начинается, строки ждут в очередях.                           *)
 (*                                                              *)
 (* ТРЕБОВАНИЯ: библиотека CAA File (тип FILE.CAA.HANDLE), карта   *)
 (* SD FAT16/FAT32 MBR, путь /mnt/ufs/media/mmcblk0p1/.           *)
 (* ============================================================ *)
 PROGRAM PRG_AlarmLogSD
 VAR CONSTANT
-    cAlarmCnt : INT := 11;   // сколько аварий отслеживаем
-    cQSize    : INT := 20;   // глубина очереди строк
+    cAlarmCnt       : INT := 11;   // сколько аварий отслеживаем
+    cQSize          : INT := 20;   // глубина очереди строк
+    cWriteFailForce : INT := 3;    // столько неудачных записей подряд =
+                                   // карта полна → удалить старый месяц
 END_VAR
 VAR
     (* --- Аварии: состояние + названия --- *)
@@ -66,6 +91,22 @@ VAR
     wsTimeStamp : WSTRING(24);
     wsHH : WSTRING(4);  wsMM : WSTRING(4);
     wsDD : WSTRING(4);  wsMo : WSTRING(4);  wsYY : WSTRING(6);
+
+    (* --- Помесячные файлы --- *)
+    iLogYear      : INT;    // год/месяц, в которые сейчас пишем
+    iLogMonth     : INT;
+    iLogYearPrev  : INT;    // 0 при старте → пути соберутся в 1-м же цикле
+    iLogMonthPrev : INT;
+
+    (* --- Сторож места на карте --- *)
+    fbGuard         : FB_SdSpaceGuard;
+    fbCardSize      : FB_SdCardSize;   // автоопределение ёмкости карты
+    tonSdCheck      : TON;
+    xGuardTrig      : BOOL;
+    xGuardStart     : BOOL;
+    xCapTrig        : BOOL;   // перечитать ёмкость карты
+    xGuardForceAuto : BOOL;   // авто-форс: карта полна (серия отказов записи)
+    iWriteFailCnt   : INT;    // неудачных записей подряд
 END_VAR
 
 
@@ -117,9 +158,126 @@ END_FOR;
 
 
 (* ============================================================ *)
-(* 4. КОНЕЧНЫЙ АВТОМАТ: пишет по очереди 3 файла                *)
+(* 4. ПУТИ ФАЙЛОВ ТЕКУЩЕГО МЕСЯЦА                               *)
+(* ============================================================ *)
+(* Если RTC ещё не готов или сбит (села батарейка) — год выйдет  *)
+(* за 2000..2199. Писать в "alarms-01-1970.log" нельзя (такой     *)
+(* месяц не разберётся обратно и файл станет неудаляемым), поэтому*)
+(* весь «бесчасовой» период сваливаем в один файл 01-2000. Он     *)
+(* заведомо самый старый по ключу, то есть удалится первым, когда *)
+(* место кончится, — и при этом защищён как «текущий», пока RTC   *)
+(* не починят.                                                   *)
+IF iCurrentYear >= 2000 AND iCurrentYear <= 2199
+   AND iCurrentMonth >= 1 AND iCurrentMonth <= 12 THEN
+    iLogYear  := iCurrentYear;
+    iLogMonth := iCurrentMonth;
+    xSdRtcBad := FALSE;
+ELSE
+    iLogYear  := 2000;
+    iLogMonth := 1;
+    xSdRtcBad := TRUE;
+END_IF;
+
+IF iLogYear <> iLogYearPrev OR iLogMonth <> iLogMonthPrev THEN
+    sAlarmLogPath    := F_SdLogPath(sSdLogDir, sAlarmLogPrefix, iLogYear, iLogMonth);
+    sPumpLogPath     := F_SdLogPath(sSdLogDir, sPumpLogPrefix,  iLogYear, iLogMonth);
+    sSetpointLogPath := F_SdLogPath(sSdLogDir, sSetpLogPrefix,  iLogYear, iLogMonth);
+    iLogYearPrev     := iLogYear;
+    iLogMonthPrev    := iLogMonth;
+    xGuardTrig       := TRUE;    // новый месяц — сразу проверить место
+    xCapTrig         := TRUE;    // и заодно перечитать ёмкость карты
+END_IF;
+
+
+(* ============================================================ *)
+(* 5. СТОРОЖ МЕСТА НА КАРТЕ                                     *)
+(* ============================================================ *)
+(* Периодический тик (самосброс: Q взводится на 1 цикл за период) *)
+tonSdCheck(IN := NOT tonSdCheck.Q, PT := tSdCheckPeriod);
+IF tonSdCheck.Q THEN
+    xCapTrig   := TRUE;
+    xGuardTrig := TRUE;
+END_IF;
+
+(* --- ЁМКОСТЬ КАРТЫ ---                                           *)
+(* Сначала пробуем определить её САМИ (FB_SdCardSize читает размер *)
+(* раздела у ядра). Получилось — номинал из списка не нужен вообще. *)
+(* Не получилось — берём выбранный на экране номинал.               *)
+fbCardSize(xTrigger := xCapTrig AND (iState = 0) AND NOT fbGuard.xBusy,
+           sSysPath := sSdCardSysPath);
+IF fbCardSize.xBusy THEN
+    xCapTrig := FALSE;
+END_IF;
+
+xSdCapAuto       := fbCardSize.xValid;
+udiSdCapAutoMB   := fbCardSize.udiCapacityMB;
+udiSdCardSectors := fbCardSize.udiSectors;
+
+IF iSdCardSize < 0 THEN iSdCardSize := 0; END_IF;
+IF iSdCardSize > 6 THEN iSdCardSize := 6; END_IF;
+
+IF xSdCapAuto THEN
+    udiSdUsableMB := udiSdCapAutoMB;
+ELSE
+    udiSdUsableMB := audiSdCardMB[iSdCardSize];
+END_IF;
+
+(* АВАРИЙНЫЙ ФОРС. Если запись не проходит подряд cWriteFailForce  *)
+(* раз — карта реально полна, что бы ни говорил расчёт по номиналу *)
+(* (например, в списке выбрали 32 ГБ, а стоит карта на 16). Тогда  *)
+(* удаляем самый старый месяц безусловно. Одиночный сбой записи к  *)
+(* удалению НЕ приводит — только серия подряд.                     *)
+IF iWriteFailCnt >= cWriteFailForce THEN
+    xGuardTrig      := TRUE;
+    xGuardForceAuto := TRUE;
+    iWriteFailCnt   := 0;
+END_IF;
+
+(* Запускаем сторожа ТОЛЬКО когда автомат записи стоит в IDLE:     *)
+(* так исключено удаление файла при открытом дескрипторе.          *)
+xGuardStart := xGuardTrig AND xAlarmLogSDEnable
+               AND (iState = 0) AND NOT fbGuard.xBusy AND NOT fbCardSize.xBusy;
+
+fbGuard(xTrigger      := xGuardStart,
+        xForce        := xGuardForceAuto,
+        sDir          := sSdLogDir,
+        sPrefix1      := sAlarmLogPrefix,
+        sPrefix2      := sPumpLogPrefix,
+        sPrefix3      := sSetpLogPrefix,
+        udiUsableMB   := udiSdUsableMB,
+        udiFreeMinMB  := udiSdFreeMinMB,
+        iCurYear      := iLogYear,
+        iCurMonth     := iLogMonth);
+
+IF fbGuard.xBusy THEN
+    xGuardTrig      := FALSE;
+    xGuardForceAuto := FALSE;
+END_IF;
+
+(* Диагностика на экран *)
+udiSdQuotaMB       := fbGuard.udiQuotaMB;
+udiSdOursMB        := fbGuard.udiOursMB;
+udiSdUsedMB        := fbGuard.udiUsedMB;
+udiSdForeignMB     := fbGuard.udiForeignMB;
+udiSdOldestMB      := fbGuard.udiOldestMB;
+xSdNothingToDelete := fbGuard.xNothingToDelete;
+xSdLogQuotaStop    := fbGuard.xQuotaStop;
+xSdCleanupFault    := fbGuard.xFault;
+iSdDeletedTotal    := fbGuard.iDeletedTotal;
+sSdLastDeleted     := fbGuard.sLastDeleted;
+
+
+(* ============================================================ *)
+(* 6. КОНЕЧНЫЙ АВТОМАТ: пишет по очереди 3 файла                *)
 (*    приоритет: аварии → изменения ПЧ → уставки               *)
 (* ============================================================ *)
+(* Запись стоит, пока сторож занят (иначе он удалял бы файл с    *)
+(* открытым дескриптором) ИЛИ пока поднят xQuotaStop — последний *)
+(* рубеж защиты карты: наши журналы упёрлись в квоту, а удалять   *)
+(* уже нечего. Строки при этом копятся в очередях, лишние         *)
+(* считаются в iDroppedCnt; журналы на экране ведутся как обычно. *)
+IF NOT fbGuard.xBusy AND NOT fbCardSize.xBusy AND NOT fbGuard.xQuotaStop THEN
+
 CASE iState OF
 
     0:  (* IDLE — выбрать непустую очередь, взять строку, начать *)
@@ -179,6 +337,9 @@ CASE iState OF
             iState := 3;
         ELSIF fbFileWrite.xError THEN
             fbFileWrite(xExecute := FALSE);
+            xSdWriteFault := TRUE;
+            xGuardTrig    := TRUE;
+            iWriteFailCnt := iWriteFailCnt + 1;      // не пишется — проверить место
             iState := 5;
         END_IF;
 
@@ -188,9 +349,14 @@ CASE iState OF
         IF fbFileWrite.xDone THEN
             fbFileWrite(xExecute := FALSE);
             iWrittenCnt := iWrittenCnt + 1;
+            xSdWriteFault := FALSE;
+            iWriteFailCnt := 0;         // запись прошла — серия отказов сброшена
             iState := 4;
         ELSIF fbFileWrite.xError THEN
             fbFileWrite(xExecute := FALSE);
+            xSdWriteFault := TRUE;
+            xGuardTrig    := TRUE;
+            iWriteFailCnt := iWriteFailCnt + 1;
             iState := 5;
         END_IF;
 
@@ -208,7 +374,12 @@ CASE iState OF
             iState := 0;
         END_IF;
 
-    9:  (* DROP — ошибка открытия, едем дальше *)
+    9:  (* DROP — ошибка открытия/создания, едем дальше *)
+        xSdWriteFault := TRUE;
+        xGuardTrig    := TRUE;
+        iWriteFailCnt := iWriteFailCnt + 1;
         iState := 0;
 
 END_CASE;
+
+END_IF;

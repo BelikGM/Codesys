@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 432" width="720" height="432" role="img" aria-label="Схема главного окна CODESYS: меню, панель инструментов, дерево устройств, редактор кода, панель сообщений">
+  <style>
+    .win  { fill:#F0F1EE; stroke:#A8AFA6; stroke-width:1 }
+    .pane { fill:#FFFFFF; stroke:#B9BEB8; stroke-width:1 }
+    .bar  { fill:#E4E6E1; stroke:#B9BEB8; stroke-width:1 }
+    .t    { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; fill:#1A1D1A }
+    .tm   { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; fill:#6A716B }
+    .tt   { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; fill:#FFFFFF }
+    .mono { font-family:"Consolas","DejaVu Sans Mono",monospace; font-size:10.5px; fill:#1A1D1A }
+    .kw   { font-family:"Consolas","DejaVu Sans Mono",monospace; font-size:10.5px; fill:#1D4ED8 }
+    .cm   { font-family:"Consolas","DejaVu Sans Mono",monospace; font-size:10.5px; fill:#3F7A4A }
+    .cn   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:700; fill:#FFFFFF }
+    .dot  { fill:#14584A }
+    .lead { stroke:#14584A; stroke-width:1.4; fill:none }
+  </style>
+
+  <rect x="1" y="1" width="718" height="430" class="win"/>
+
+  <!-- заголовок окна -->
+  <rect x="1" y="1" width="718" height="24" fill="#2F3A34"/>
+  <text x="12" y="17" class="tt">60_years_v1.project — CODESYS V3.5 SP17 Patch 3</text>
+  <text x="694" y="17" class="tt">✕</text>
+
+  <!-- строка меню -->
+  <rect x="1" y="25" width="718" height="21" class="bar"/>
+  <text x="12"  y="39" class="t">Файл</text>
+  <text x="50"  y="39" class="t">Правка</text>
+  <text x="100" y="39" class="t">Вид</text>
+  <text x="133" y="39" class="t">Проект</text>
+  <text x="180" y="39" class="t">Компиляция</text>
+  <text x="252" y="39" class="t">Онлайн</text>
+  <text x="300" y="39" class="t">Отладка</text>
+  <text x="352" y="39" class="t">Инструменты</text>
+  <text x="428" y="39" class="t">Окно</text>
+  <text x="466" y="39" class="t">Справка</text>
+
+  <!-- панель инструментов -->
+  <rect x="1" y="46" width="718" height="24" class="bar"/>
+  <g stroke="#6A716B" fill="none" stroke-width="1.2">
+    <rect x="12" y="52" width="12" height="12"/>
+    <rect x="32" y="52" width="12" height="12"/>
+    <rect x="58" y="52" width="12" height="12"/>
+  </g>
+  <path d="M82 52 h12 v12 h-12 z" fill="none" stroke="#6A716B" stroke-width="1.2"/>
+  <path d="M104 52 l0 12 l10 -6 z" fill="#2E7D5B"/>
+  <rect x="124" y="52" width="11" height="11" fill="#9E2B1C"/>
+  <line x1="148" y1="50" x2="148" y2="66" stroke="#B9BEB8"/>
+
+  <!-- левая панель: Устройства -->
+  <rect x="8" y="76" width="196" height="300" class="pane"/>
+  <rect x="8" y="76" width="196" height="19" class="bar"/>
+  <text x="16" y="90" class="t">Устройства</text>
+  <g class="mono">
+    <text x="16" y="112">▾ Device (СПК1хх [М01])</text>
+    <text x="24" y="128">▾ PLC Logic</text>
+    <text x="32" y="144">▾ Application</text>
+    <text x="40" y="160">Менеджер библиотек</text>
+    <text x="40" y="176">GVL</text>
+    <text x="40" y="192">GVL_Fountain</text>
+  </g>
+  <rect x="36" y="198" width="164" height="15" fill="#2C6FB5"/>
+  <text x="40" y="209" class="mono" fill="#FFFFFF">PLC_PRG</text>
+  <g class="mono">
+    <text x="40" y="226">PRG_IO</text>
+    <text x="40" y="242">PRG_Fountain</text>
+    <text x="40" y="258">PRG_Pumps</text>
+    <text x="40" y="274">Конфигурация задач</text>
+    <text x="40" y="290">Менеджер визуализации</text>
+    <text x="16" y="308">▾ Modbus_COM</text>
+    <text x="16" y="324">▾ Modbus_COM_2</text>
+  </g>
+
+  <!-- редактор: Объявления -->
+  <rect x="212" y="76" width="500" height="104" class="pane"/>
+  <rect x="212" y="76" width="500" height="19" class="bar"/>
+  <text x="220" y="90" class="t">PLC_PRG — Объявления</text>
+  <text x="220" y="112" class="kw">PROGRAM</text><text x="278" y="112" class="mono">PLC_PRG</text>
+  <text x="220" y="128" class="kw">VAR</text>
+  <text x="220" y="144" class="kw">END_VAR</text>
+
+  <!-- редактор: Реализация -->
+  <rect x="212" y="188" width="500" height="128" class="pane"/>
+  <rect x="212" y="188" width="500" height="19" class="bar"/>
+  <text x="220" y="202" class="t">PLC_PRG — Реализация</text>
+  <text x="220" y="224" class="mono">PRG_IO();</text>
+  <text x="330" y="224" class="cm">(* чтение входов *)</text>
+  <text x="220" y="240" class="mono">PRG_Fountain();</text>
+  <text x="330" y="240" class="cm">(* автоматика фонтана *)</text>
+  <text x="220" y="256" class="mono">PRG_Pumps();</text>
+  <text x="330" y="256" class="cm">(* ПЧ на COM2 *)</text>
+  <text x="220" y="272" class="mono">PRG_Errors();</text>
+  <text x="220" y="288" class="mono">PRG_IO_Write();</text>
+  <text x="330" y="288" class="cm">(* сборка выходов — последней *)</text>
+
+  <!-- сообщения -->
+  <rect x="8" y="324" width="704" height="76" class="pane"/>
+  <rect x="8" y="324" width="704" height="19" class="bar"/>
+  <text x="16" y="338" class="t">Сообщения — всего 0 ошибок, 2 предупреждения</text>
+  <text x="16" y="360" class="mono" fill="#226B4C">Компиляция завершена — 0 ошибок, 2 предупреждения</text>
+  <text x="16" y="378" class="tm">Готово.</text>
+
+  <!-- статусная строка -->
+  <rect x="1" y="406" width="718" height="25" class="bar"/>
+  <text x="12" y="422" class="t">Последняя компиляция: 0 ошибок</text>
+  <rect x="560" y="411" width="66" height="15" fill="#226B4C"/>
+  <text x="570" y="422" class="tt">РАБОТА</text>
+
+  <!-- выноски -->
+  <g>
+    <circle cx="266" cy="35" r="10" class="dot"/><text x="266" y="39" class="cn" text-anchor="middle">1</text>
+    <circle cx="110" cy="58" r="10" class="dot"/><text x="110" y="62" class="cn" text-anchor="middle">2</text>
+    <circle cx="188" cy="86" r="10" class="dot"/><text x="188" y="90" class="cn" text-anchor="middle">3</text>
+    <circle cx="696" cy="86" r="10" class="dot"/><text x="696" y="90" class="cn" text-anchor="middle">4</text>
+    <circle cx="696" cy="198" r="10" class="dot"/><text x="696" y="202" class="cn" text-anchor="middle">5</text>
+    <circle cx="696" cy="334" r="10" class="dot"/><text x="696" y="338" class="cn" text-anchor="middle">6</text>
+    <circle cx="600" cy="418" r="10" class="dot"/><text x="600" y="422" class="cn" text-anchor="middle">7</text>
+  </g>
+</svg>

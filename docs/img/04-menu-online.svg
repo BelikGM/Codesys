@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" width="720" height="340" role="img" aria-label="Схема раскрытого меню Онлайн с пунктами Логин, Выход, Загрузка, Онлайн-изменение, Создать загрузочное приложение и подменю Сброс">
+  <style>
+    .win  { fill:#F0F1EE; stroke:#A8AFA6; stroke-width:1 }
+    .menu { fill:#FFFFFF; stroke:#8E958C; stroke-width:1 }
+    .bar  { fill:#E4E6E1; stroke:#B9BEB8; stroke-width:1 }
+    .t    { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; fill:#1A1D1A }
+    .tb   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:700; fill:#1A1D1A }
+    .tm   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; fill:#A2A9A1 }
+    .tk   { font-family:"Consolas","DejaVu Sans Mono",monospace; font-size:10.5px; fill:#6A716B }
+    .tt   { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; fill:#FFFFFF }
+    .cn   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:700; fill:#FFFFFF }
+    .dot  { fill:#14584A }
+    .warn { fill:#9E2B1C }
+  </style>
+
+  <rect x="1" y="1" width="718" height="338" class="win"/>
+  <rect x="1" y="1" width="718" height="24" fill="#2F3A34"/>
+  <text x="12" y="17" class="tt">60_years_v1.project — CODESYS V3.5 SP17 Patch 3</text>
+
+  <!-- строка меню, «Онлайн» подсвечен -->
+  <rect x="1" y="25" width="718" height="22" class="bar"/>
+  <text x="12"  y="40" class="t">Файл</text>
+  <text x="50"  y="40" class="t">Правка</text>
+  <text x="100" y="40" class="t">Вид</text>
+  <text x="133" y="40" class="t">Проект</text>
+  <text x="180" y="40" class="t">Компиляция</text>
+  <rect x="246" y="25" width="52" height="22" fill="#2C6FB5"/>
+  <text x="252" y="40" class="t" fill="#FFFFFF">Онлайн</text>
+  <text x="306" y="40" class="t">Отладка</text>
+  <text x="358" y="40" class="t">Инструменты</text>
+
+  <!-- раскрытое меню -->
+  <rect x="246" y="47" width="300" height="252" class="menu"/>
+
+  <text x="262" y="70" class="t">Логин</text>
+  <text x="470" y="70" class="tk">Alt+F8</text>
+
+  <text x="262" y="94" class="t">Выход</text>
+  <text x="470" y="94" class="tk">Ctrl+F8</text>
+
+  <line x1="250" y1="106" x2="542" y2="106" stroke="#D5DBD2"/>
+
+  <text x="262" y="128" class="t">Загрузка</text>
+  <text x="262" y="152" class="t">Онлайн-изменение</text>
+
+  <line x1="250" y1="164" x2="542" y2="164" stroke="#D5DBD2"/>
+
+  <rect x="247" y="172" width="298" height="24" fill="#DCE8E3"/>
+  <text x="262" y="188" class="tb">Создать загрузочное приложение</text>
+
+  <line x1="250" y1="204" x2="542" y2="204" stroke="#D5DBD2"/>
+
+  <text x="262" y="226" class="t">Записать значения RETAIN…</text>
+  <text x="262" y="250" class="t">Восстановить значения RETAIN…</text>
+
+  <line x1="250" y1="262" x2="542" y2="262" stroke="#D5DBD2"/>
+
+  <text x="262" y="284" class="t">Сброс тёплый / Сброс холодный</text>
+  <text x="524" y="284" class="t">▸</text>
+
+  <!-- предупреждение о заводском сбросе -->
+  <rect x="560" y="172" width="150" height="88" fill="#F2DFDA" stroke="#9E2B1C"/>
+  <text x="572" y="192" class="tb" fill="#9E2B1C">Сброс заводской</text>
+  <text x="572" y="210" font-family="Segoe UI,Arial,sans-serif" font-size="10.5px" fill="#9E2B1C">стирает приложение</text>
+  <text x="572" y="226" font-family="Segoe UI,Arial,sans-serif" font-size="10.5px" fill="#9E2B1C">и ВСЕ RETAIN —</text>
+  <text x="572" y="242" font-family="Segoe UI,Arial,sans-serif" font-size="10.5px" fill="#9E2B1C">никогда не нажимать</text>
+
+  <!-- выноски -->
+  <g>
+    <circle cx="230" cy="59" r="10" class="dot"/><text x="230" y="63" class="cn" text-anchor="middle">1</text>
+    <circle cx="230" cy="141" r="10" class="dot"/><text x="230" y="145" class="cn" text-anchor="middle">2</text>
+    <circle cx="230" cy="184" r="10" class="dot"/><text x="230" y="188" class="cn" text-anchor="middle">3</text>
+    <circle cx="230" cy="284" r="10" class="dot"/><text x="230" y="288" class="cn" text-anchor="middle">4</text>
+  </g>
+</svg>

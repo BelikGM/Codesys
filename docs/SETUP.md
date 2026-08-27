@@ -1,310 +1,376 @@
-# SETUP — что нужно установить и скачать для работы с проектом
+# SETUP — всё, что нужно скачать и подключить
 
-Файл собран 25.08.2026 при первом развёртывании репозитория на новой
-машине. Проверено фактически: что лежит в репозитории, что установлено
-на ПК, какие библиотеки и устройства требует код.
+Список для проверки перед выездом. Пройти сверху вниз и отметить, чего
+не хватает. Формат каждого пункта: **название — зачем нужно — ссылка**.
 
----
-
-## 0. ГЛАВНОЕ: чего в репозитории НЕТ
-
-Репозиторий `BelikGM/Codesys` содержит **только текст программ** (`.st`)
-и документацию (`.md`) — 60 файлов, ни одного файла проекта CODESYS.
-
-**Отсутствует (и не восстанавливается из репозитория):**
-
-| Чего нет | Почему это критично |
-|---|---|
-| `*.project` — сам файл проекта CODESYS | Без него нечего открывать, компилировать и грузить |
-| Дерево устройств (Device tree) | Контроллер, Modbus COM1/COM2, МВ110, МУ110, EMD_PUMP_1/2/3 |
-| Modbus I/O Mapping | Привязка `wMV110_Inputs`, `wMU110_Outputs`, регистров ПЧ |
-| Визуализация (экраны) | `docs/SCREENS.md` — это ОПИСАНИЕ экранов, а не сами экраны |
-| Конфигурация задач (Task configuration) | MainTask, период цикла |
-| Менеджер библиотек с версиями | CAA File, SysTimeRtc, OwenVisuDialogs |
-
-**Вывод:** собрать рабочий проект «с нуля» только из этого репозитория
-нельзя. Нужен исходный `.project` (или архив `.projectarchive`) с
-машины, где проект писался. Репозиторий — это версионируемая копия
-кода POU для правок и ревью, а не поставка проекта.
-
-**Первое действие:** найти на старой машине файл проекта и положить
-рядом. Либо выгрузить архивом из CODESYS:
-`Файл → Архив проекта → Сохранить/отправить архив` (`.projectarchive`
-тянет с собой библиотеки и описания устройств).
+**Железо:** ОВЕН СПК107 [М01], прошивка 2.4
+**Среда:** CODESYS V3.5 SP17 Patch 3
+**Проекты:** `60-let-oktyabrya/60_years_v1.project` (3 насоса),
+`ddyut/Primorskiy_v2.project` (2 насоса) — оба лежат в репозитории.
 
 ---
 
-## 1. Состояние этой машины (проверено 25.08.2026)
+# ЧАСТЬ 1. ЧТО СКАЧАТЬ
 
-| Компонент | Статус |
-|---|---|
-| Git 2.55.0.windows.3 | ✅ установлен |
-| Node.js v24.19.0 | ✅ установлен |
-| Тест модели SD-сторожа | ✅ 165/165 (`node 60-let-oktyabrya/docs/sd_guard_model_test.js`) |
-| **CODESYS V3.5** | ❌ **не установлен** |
-| **Таргет-файлы ОВЕН** | ❌ нет |
-| **Библиотеки ОВЕН** | ❌ нет |
-| **Драйвер USB для СПК** | ❌ нет |
-| **Конфигуратор М110** | ❌ нет |
+## A. Обязательное — без этого проект не запустится
 
-Проверено перебором `C:\Program Files*` и веток реестра Uninstall —
-ничего от CODESYS / ОВЕН на машине нет. Ставить всё с нуля.
+### 1. CODESYS V3.5 SP17 Patch 3
+Сама среда программирования. Версия жёстко привязана к прошивке 2.4:
+на другой проект не откроется корректно.
+https://ftp.owen.ru/CoDeSys3/01_CODESYS/CODESYS_3.5_SP17_Patch3.zip
 
----
+### 2. OwenTargets-3.5.17.36.package
+Таргет-файлы ОВЕН. Без них в списке устройств нет СПК1хх [М01] —
+проект физически не откроется, дерево будет красным.
+https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.36.package
 
-## 2. ЖЕЛЕЗО И ВЕРСИИ
+### 3. OwenTargets-3.5.17.31.package
+Запасной таргет — базовая версия для СПК1хх [М01]. Пригодится, если
+проект собирался на ней и среда просит обновление дерева устройств.
+https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.31.package
 
-| Параметр | Значение |
-|---|---|
-| Контроллер | **ОВЕН СПК107 [М01]** (семейство СПК1хх [М01]) |
-| Прошивка | **2.4** (последняя в линейке — 2.4.0923.1000) |
-| Среда | **CODESYS V3.5 SP17 Patch 3** |
-| Таргет | **OwenTargets-3.5.17.3x** |
+### 4. SPK_USB_Driver_1.2.90.exe
+Драйвер USB для СПК. Без него ноутбук не увидит контроллер по USB-кабелю
+(по Ethernet не нужен).
+https://ftp.owen.ru/CoDeSys3/06_SPK_USB_Driver/SPK_USB_Driver_1.2.90.exe
 
-Подтверждается и кодом: каталог приложения `app.spk1xxm01`, путь SD
-`/mnt/ufs/media/mmcblk0p1/`, тип дескриптора `FILE.CAA.HANDLE`.
+### 5. OwenVisuDialogs_v3.5.17.3.library
+Библиотека диалогов ОВЕН. Нужна для экранов ввода пароля —
+в проекте используется элемент `LoginOnlyPassWithKeysOwen`.
+Без неё визуализация не скомпилируется.
+https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/OwenVisuDialogs_v3.5.17.3.library
 
-⚠️ Контроллеры с рантаймом SP17 Patch 3 **откатить на более старую
-прошивку нельзя**. Версию таргета брать под прошивку 2.4, а не «самую
-новую из принципа».
+## B. Полезное — ставится один раз, экономит время
 
----
+### 6. Конфигуратор М110
+Утилита ОВЕН для задания адреса и скорости модулям МВ110-16Д и
+МУ110-16Р. Нужна, если модуль заменили или сбились настройки.
+https://owen.ru/soft
 
-## 3. ЧТО СКАЧАТЬ — все ссылки
+### 7. Owen Configurator
+Универсальный конфигуратор приборов ОВЕН, замена М110 для новых
+приборов.
+https://owen.ru/product/owen_configurator
 
-### 3.1 Среда программирования (обязательно)
+### 8. WinSCP
+Забрать журналы аварий с SD-карты контроллера по сети, не вынимая
+карту. Путь на СПК: `/mnt/ufs/media/mmcblk0p1`.
+https://winscp.net/eng/download.php
 
-| Файл | Размер | Ссылка |
-|---|---|---|
-| **CODESYS V3.5 SP17 Patch 3** — наша версия | ~2 ГБ | https://ftp.owen.ru/CoDeSys3/01_CODESYS/CODESYS_3.5_SP17_Patch3.zip |
-| CODESYS Installer 2.6.0.0 (менеджер пакетов) | 171 МБ | https://ftp.owen.ru/CoDeSys3/01_CODESYS/CODESYS%20Installer%202.6.0.0.exe |
-| CODESYS Gateway V3.5 SP5 Patch5 (если шлюз не встал со средой) | — | https://ftp.owen.ru/CoDeSys3/01_CODESYS/CODESYS%20Gateway%20V3.5SP5Patch5%20Setup.zip |
+### 9. OwenVisuTools_v3.5.17.21.library
+Дополнительные виджеты ОВЕН для визуализации. В текущих экранах не
+используется — брать только если будете добавлять новые элементы.
+https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/OwenVisuTools_v3.5.17.21.library
 
-Каталог целиком: https://ftp.owen.ru/CoDeSys3/01_CODESYS/
+## C. Запасное — скачать, но НЕ ставить без необходимости
 
-### 3.2 Таргет-файлы ОВЕН (обязательно)
+### 10. Прошивка СПК1хх [М01] 2.4.0923.1000
+Прошивка контроллера, 411 МБ. Шить только если среда отказывается
+логиниться из-за расхождения версий. Откат на более старую прошивку
+на этом контроллере невозможен.
+https://ftp.owen.ru/CoDeSys3/10_Firmware/SPK1xx_M01/
 
-Без таргета контроллера СПК не будет в списке устройств. Наша линейка —
-SP17; всё, что ниже 3.5.17.x, к СПК107 [М01] с прошивкой 2.4 не
-относится и приведено только для полноты каталога.
+### 11. CODESYS Gateway V3.5 SP5 Patch5
+Отдельный установщик шлюза связи. Нужен, только если шлюз не
+установился вместе со средой (значок в трее серый или отсутствует).
+https://ftp.owen.ru/CoDeSys3/01_CODESYS/CODESYS%20Gateway%20V3.5SP5Patch5%20Setup.zip
 
-| Файл | Дата | Для чего | Ссылка |
-|---|---|---|---|
-| **OwenTargets-3.5.17.36.package** | 16.02.2026 | самый свежий в линейке SP17 | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.36.package |
-| OwenTargets-3.5.17.35.package | 14.03.2025 | предыдущий | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.35.package |
-| OwenTargets-3.5.17.34.package | 29.10.2024 | — | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.34.package |
-| OwenTargets-3.5.17.33.package | 13.06.2024 | — | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.33.package |
-| OwenTargets-3.5.17.32.package | 07.12.2023 | — | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.32.package |
-| **OwenTargets-3.5.17.31.package** | 19.05.2022 | базовый для СПК1хх [М01] | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.17.31.package |
-| OwenTargets-3.5.16.32.package | 21.06.2021 | SP16 — не наш | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.16.32.package |
-| OwenTargets-3.5.14.30-10.package | 18.03.2021 | SP14 — не наш | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.14.30-10.package |
-| OwenTargets-3.5.11.50-14.package | 02.07.2019 | SP11 P5 — не наш | https://ftp.owen.ru/CoDeSys3/03_Targets/OwenTargets-3.5.11.50-14.package |
+### 12. CODESYS Installer 2.6.0.0
+Отдельный менеджер пакетов. Нужен, если в среде нет пункта
+`Инструменты → CODESYS Installer`.
+https://ftp.owen.ru/CoDeSys3/01_CODESYS/CODESYS%20Installer%202.6.0.0.exe
 
-Каталог целиком (рядом лежат `.txt` с составом каждого пакета):
-https://ftp.owen.ru/CoDeSys3/03_Targets/
+### 13. Mx110Drivers_v3.5.4.12.package
+Описания модулей Мх110 для дерева устройств. **Скорее всего не
+понадобится:** пакет собран под CODESYS 3.5.4 и на SP17 может не
+встать, а в проекте модули работают как обычные Modbus-slave через
+`wMV110_Inputs` / `wMU110_Outputs`.
+https://ftp.owen.ru/CoDeSys3/05_MX110/Mx110Drivers_v3.5.4.12.package
 
-⚠️ Ставить нужно тот таргет, с которым проект собирался в прошлый раз —
-версию видно в свойствах устройства в самом проекте. Если поставить
-более новый, при открытии среда предложит обновить дерево устройств,
-а это тянет пересборку и лишние риски на объекте.
+## D. Документация — держать на ноутбуке
 
-### 3.3 Библиотеки ОВЕН (нужны для визуализации проекта)
+### 14. Первый старт CODESYS V3.5 (v3.0)
+Установка среды и таргетов, первое подключение — со скриншотами.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_FirstStart_v3.0.pdf
 
-Проект использует диалоги ОВЕН — в `ddyut/docs/SCREENS.md` прямо
-упомянут элемент `LoginOnlyPassWithKeysOwen` (экран пароля).
+### 15. Modbus в CODESYS V3.5 (v3.2)
+Настройка COM-портов, мастера и слейвов, привязка каналов.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Modbus_v3.2.pdf
 
-| Файл | Ссылка |
-|---|---|
-| **OwenVisuDialogs_v3.5.17.3.library** (для SP17 P3) | https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/OwenVisuDialogs_v3.5.17.3.library |
-| OwenVisuDialogs_v3.5.16.3.library (для SP16) | https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/OwenVisuDialogs_v3.5.16.3.library |
-| OwenVisuDialogs_v3.5.14.3.library (для SP14) | https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/OwenVisuDialogs_v3.5.14.3.library |
-| OwenVisuTools_v3.5.17.21.library (доп. виджеты) | https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/OwenVisuTools_v3.5.17.21.library |
+### 16. Визуализация в CODESYS V3.5 (v3.0)
+Экраны, менеджер визуализации, привязка переменных.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Visu_v3.0.pdf
 
-Каталог всех библиотек (там же OwenStringUtils, OwenCommunication,
-OwenVendorProtocols, OwenAppTools):
-https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/
+### 17. Таргет-файлы: установка (v3.5)
+Если пакет таргетов не встаёт или СПК не появляется в списке.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Targets_v3.5.pdf
 
-### 3.4 Драйвер USB для связи с СПК (обязательно при подключении по USB)
+### 18. OwenVisuDialogs (v3.0)
+Описание диалогов ОВЕН, в том числе экранов пароля.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_OwenVisuDialogs_v3.0.pdf
 
-| Файл | Ссылка |
-|---|---|
-| **SPK_USB_Driver_1.2.90.exe** (20.03.2026) | https://ftp.owen.ru/CoDeSys3/06_SPK_USB_Driver/SPK_USB_Driver_1.2.90.exe |
-| USB_Driver_v.1.5.102.zip (старый) | https://ftp.owen.ru/CoDeSys3/06_SPK_USB_Driver/USB_Driver_v.1.5.102.zip |
+### 19. Архивация — запись на SD (v3.1)
+Работа с SD-картой, пути монтирования, форматы.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Archives_v3.1.pdf
 
-Каталог: https://ftp.owen.ru/CoDeSys3/06_SPK_USB_Driver/
+### 20. FAQ по CODESYS V3.5 (v3.7)
+Сборник типовых проблем ОВЕН.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Faq_v3.7.pdf
 
-### 3.5 Прошивки (скачать, но НЕ шить без необходимости)
+### 21. Первый старт СПК (v1.0)
+Старый документ, но скриншотов больше и они подробнее.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_First_start_v.1.0.pdf
 
-| Устройство | Ссылка на каталог |
-|---|---|
-| **СПК1хх [М01]** — последняя 2.4.0923.1000 (411 МБ, 30.11.2022) | https://ftp.owen.ru/CoDeSys3/10_Firmware/SPK1xx_M01/ |
-| СПК1хх (старый) | https://ftp.owen.ru/CoDeSys3/10_Firmware/SPK1xx/ |
-| Все прошивки | https://ftp.owen.ru/CoDeSys3/10_Firmware/ |
+### 22. Системное время СПК (v1.1)
+Работа с RTC — пригодится при разборе `PRG_TimeCorrect`.
+https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_SystemTime_v.1.1.pdf
 
-На объекте стоит прошивка **2.4** — под неё и подобран таргет SP17.
-Прошивку трогать **только** если версии таргета и прошивки разошлись и
-CODESYS отказывается логиниться. Это операция с риском окирпичивания —
-на объекте её не делают «на всякий случай».
+### 23. РЭ ELHART EMD-PUMP
+Карта регистров ПЧ. Нужна для чтения `PRG_Pumps.st` и `FB_Pump.st`.
+https://elhart.ru/drive_technology/pump_frequency_converters/emd-pump.html
+Зеркало PDF: https://ftp.totalkip.ru/report.local/re/RE_elhart_7747.pdf
 
-### 3.6 Модули Мх110 (МВ110-16Д, МУ110-16Р)
+### 24. РЭ МВ110-16Д
+Модуль дискретного ввода, адрес 1 на COM1.
+https://owen.ru/uploads/171/re_mv110-16d_dn__m01__1-ru-34143-1.14.pdf
 
-| Что | Ссылка |
-|---|---|
-| Драйверы Мх110 для дерева CODESYS `Mx110Drivers_v3.5.4.12.package` | https://ftp.owen.ru/CoDeSys3/05_MX110/Mx110Drivers_v3.5.4.12.package |
-| Описание Мх110 в CODESYS (PDF) | https://ftp.owen.ru/CoDeSys3/05_MX110/Mx110_2015.05.22.pdf |
-| Каталог | https://ftp.owen.ru/CoDeSys3/05_MX110/ |
-| **Конфигуратор М110** (задать адрес/скорость модулям) | https://owen.ru/soft |
-| Owen Configurator (универсальный) | https://owen.ru/product/owen_configurator |
-| РП «Конфигуратор М110» (PDF) | https://owen.ru/uploads/167/rp_konfigurator_m110_1-ru-57090-1.1.pdf |
-| РЭ МВ110-16Д / 16ДН (PDF) | https://owen.ru/uploads/171/re_mv110-16d_dn__m01__1-ru-34143-1.14.pdf |
+### 25. РЭ МУ110-16Р
+Модуль дискретного вывода, адрес 2 на COM1.
+https://docs.owen.ru/product/moduli_diskretnogo_vivoda_s_interfejsom_rs_485/463
+Зеркало PDF: https://www.owenkomplekt.ru/assets/files/mu110-16r/re_mu110-16r_k__m01__2637_1.pdf
 
-⚠️ Пакет `Mx110Drivers` собран под CODESYS 3.5.4 и на SP17 может не
-встать. Это не блокирует работу: в проекте модули опрашиваются как
-**обычные Modbus-slave**, вся привязка сделана через одно слово
-`wMV110_Inputs` / `wMU110_Outputs` (см. `GVL.st`, блоки 4 и 5).
-Драйвер — удобство, а не обязательность.
+### 26. РП «Конфигуратор М110»
+Как пользоваться конфигуратором из пункта 6.
+https://owen.ru/uploads/167/rp_konfigurator_m110_1-ru-57090-1.1.pdf
 
-### 3.7 Преобразователи частоты ELHART EMD-PUMP (COM2, адреса 41/42/43)
+## E. Каталоги целиком — если нужной версии нет в списке
 
-| Что | Ссылка |
-|---|---|
-| Страница серии EMD-PUMP (паспорт, РЭ, быстрый старт) | https://elhart.ru/drive_technology/pump_frequency_converters/emd-pump.html |
-| Руководство по эксплуатации (PDF, зеркало) | https://ftp.totalkip.ru/report.local/re/RE_elhart_7747.pdf |
-| Обзор серий EMD-MINI / EMD-PUMP | https://docplayer.com/149459409-Chastotnye-preobrazovateli-elhart-serii-emd-mini-i-emd-pump.html |
-
-Карта регистров нужна, чтобы читать `PRG_Pumps.st`:
-`0x0069` MaxFreq, `0x006A` MinFreq, `0x006B` AccTime, `0x006C` DecTime,
-`0x0076` F1.18 (замок параметров), `0x00D1` номин. напряжение,
-`0x00D2` номин. ток, `0x0199` / `0x01A7` / `0x01A8` защита по току,
-`0x019B` защита по перенапряжению, `0x0320` F800, `0x0325` перегрев.
-
-### 3.8 Документация ОВЕН по CODESYS (рекомендуется)
-
-Каталог: https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/
-
-| Документ | Ссылка |
-|---|---|
-| **Первый старт CODESYS V3.5 (v3.0, 15.07.2026)** | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_FirstStart_v3.0.pdf |
-| **Modbus в CODESYS V3.5 (v3.2)** | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Modbus_v3.2.pdf |
-| **Визуализация (v3.0, 25.06.2025)** | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Visu_v3.0.pdf |
-| Таргет-файлы: установка (v3.5) | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Targets_v3.5.pdf |
-| OwenVisuDialogs (v3.0) | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_OwenVisuDialogs_v3.0.pdf |
-| OwenVisuTools (v3.0) | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_OwenVisuTools_v3.0.pdf |
-| Архивация (запись на SD) v3.1 | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Archives_v3.1.pdf |
-| FAQ (v3.7, 26.02.2026) | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_Faq_v3.7.pdf |
-| История версий | https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/CDSv3.5_VersionsHistory.pdf |
-
-Старый комплект по СПК (много скриншотов, по смыслу актуален):
-https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/
-
-- Первый старт СПК: https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_First_start_v.1.0.pdf
-- Modbus СПК: https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_Modbus_v.1.1.pdf
-- Визуализация СПК: https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_Visu_v.1.2.pdf
-- Системное время СПК: https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_SystemTime_v.1.1.pdf
-- Архивы СПК: https://ftp.owen.ru/CoDeSys3/11_Documentation/01_SPK/SPK_Archives_v.1.0.pdf
-
-### 3.9 Прочее
-
-| Что | Ссылка |
-|---|---|
-| Общая страница ПО CODESYS V3 у ОВЕН | https://owen.ru/product/codesys_v3/software |
-| Корень FTP ОВЕН по CODESYS 3 | https://ftp.owen.ru/CoDeSys3/ |
-| Примеры программ | https://ftp.owen.ru/CoDeSys3/21_Examples/ |
-| WinSCP (забрать журналы с SD по сети) | https://winscp.net/eng/download.php |
-| Форум ОВЕН, ветка по СПК (FAQ, примеры) | https://owen.ru/forum/showthread.php?t=15530 |
+- Среда CODESYS: https://ftp.owen.ru/CoDeSys3/01_CODESYS/
+- Таргеты: https://ftp.owen.ru/CoDeSys3/03_Targets/
+- Библиотеки ОВЕН: https://ftp.owen.ru/CoDeSys3/04_Library/05_3.5.11.5/02_Libraries/
+- Модули Мх110: https://ftp.owen.ru/CoDeSys3/05_MX110/
+- Драйверы USB: https://ftp.owen.ru/CoDeSys3/06_SPK_USB_Driver/
+- Прошивки: https://ftp.owen.ru/CoDeSys3/10_Firmware/
+- Документация: https://ftp.owen.ru/CoDeSys3/11_Documentation/03_3.5.11.5/
+- Примеры программ: https://ftp.owen.ru/CoDeSys3/21_Examples/
+- Корень FTP ОВЕН: https://ftp.owen.ru/CoDeSys3/
 
 ---
 
-## 4. Порядок установки (один раз на машину)
+# ЧАСТЬ 2. ВСТРОЕННЫЕ БИБЛИОТЕКИ — СКАЧИВАТЬ НЕ НАДО
 
-1. Распаковать `CODESYS_3.5_SP17_Patch3.zip` → запустить `setup*.exe`
-   **от имени администратора**. Язык интерфейса меняется потом:
-   `Tools → Options → International Settings`.
-2. Перезагрузить ПК (ставится служба CODESYS Gateway).
-3. Запустить CODESYS. Меню **`Tools` (Инструменты) → `CODESYS Installer`**
-   (в старых версиях среды пункт называется **`Package Manager`**).
-4. Нажать **`Install File…`** и указать `OwenTargets-3.5.17.36.package`.
-   Согласиться на перезапуск среды.
-5. Установить драйвер `SPK_USB_Driver_1.2.90.exe`.
-6. Библиотеки ОВЕН: **`Tools → Library Repository → Install…`**, указать
-   `OwenVisuDialogs_v3.5.17.3.library`.
-7. Проверка: `Файл → Новый проект → Стандартный проект` — в списке
-   устройств должен появиться **СПК1хх [М01]**.
-   Появился — среда готова. Пустой проект после проверки не сохранять.
+Идут в составе CODESYS. Но их нужно **подключить в проекте** — если
+проект открылся, а компиляция ругается на неизвестные типы, смотреть
+сюда. Проверяется в дереве: `Application → Менеджер библиотек`.
+
+### 27. Standard
+Даёт: `TON` (100 экземпляров в проекте), `TOF` (2), `R_TRIG` (2),
+строковые функции `CONCAT`, `LEN`, `WCONCAT`, `WLEN`.
+Обычно добавлена автоматически при создании стандартного проекта.
+Без неё не скомпилируется ничего.
+
+### 28. SysTimeRtc
+Даёт: `SysTimeRtcGet`, `SysTimeRtcSet`, `SysTimeRtcConvertUtcToDate`,
+тип `SYSTIMEDATE`.
+Используется в `PRG_Fountain.st` (чтение времени) и
+`PRG_TimeCorrect.st` (коррекция ухода часов).
+Системная библиотека — в списке добавления может быть скрыта, см.
+Часть 3, пункт «Внутренние библиотеки».
+
+### 29. CAA File
+Даёт пространство имён `FILE`: `FILE.Open`, `FILE.Read`, `FILE.Write`,
+`FILE.Close`, `FILE.Delete`, `FILE.GetSize`, `FILE.Flush`,
+`FILE.DirOpen`, `FILE.DirList`, `FILE.DirClose`, режимы `FILE.MODE.*`,
+коды `FILE.ERROR.*` и тип дескриптора **`FILE.CAA.HANDLE`**.
+Используется в `PRG_AlarmLogSD.st`, `FB_SdSpaceGuard.st`,
+`FB_SdCardSize.st` — вся запись журналов на SD-карту.
+⚠️ Тип дескриптора объявлять именно как `FILE.CAA.HANDLE`, а не
+`CAA.HANDLE` — иначе ошибка «ссылка на объект не указывает на экземпляр».
+
+### 30. CAA Types Extern
+Тянется автоматически как зависимость CAA File. Отдельно добавлять не
+нужно, но если её нет — CAA File не подключится.
+
+### 31. VisuElems (Visualization)
+Библиотеки визуализации. Добавляются автоматически, когда в проекте
+есть Менеджер визуализации. Вручную не трогать.
+
+### 32. Modbus COM / Modbus Master, Modbus Slave
+Это **не библиотеки, а описания устройств** — идут вместе с CODESYS и
+таргет-пакетом. Появляются при добавлении устройства в дерево, а не
+через Менеджер библиотек. См. Часть 3, пункт «Описания устройств».
 
 ---
 
-## 5. Что должно быть в дереве проекта CODESYS
+# ЧАСТЬ 3. КУДА ЧТО ПОДКЛЮЧАЕТСЯ
 
-Восстановлено по коду — понадобится при сверке или пересборке.
+Главная путаница: разные вещи ставятся в **разных местах**, и половина
+из них — на уровень среды, а не проекта. Установил, но не подключил в
+проекте — самая частая ошибка.
+
+## Место 1. Таргет-пакеты (`.package`) → уровень среды
+
+`Инструменты → CODESYS Installer → Install File… → выбрать .package`
+
+В старых версиях среды пункт называется
+`Инструменты → Менеджер пакетов → Установить…`
+
+- Ставится **один раз на машину**, не в проект.
+- Требует **перезапуска CODESYS**.
+- Результат: в списке устройств появляется СПК1хх [М01].
+- Проверка: `Файл → Новый проект → Стандартный проект` — контроллер
+  должен быть в выпадающем списке. Пустой проект потом не сохранять.
+
+Сюда идут: пункты **2** и **3** списка выше.
+
+## Место 2. Внешние библиотеки (`.library`, `.compiled-library`) → ДВА шага
+
+Это то место, где чаще всего застревают: шагов действительно два, и
+после первого библиотека уже «установлена», но проекту недоступна.
+
+**Шаг 2а — положить в хранилище среды:**
+
+`Инструменты → Репозиторий библиотек… → Установить… → выбрать файл`
+
+Библиотека попадёт в системное хранилище. Делается один раз на машину.
+
+**Шаг 2б — подключить к конкретному проекту:**
+
+`Двойной клик по «Менеджер библиотек» в дереве → Добавить библиотеку…
+→ найти по имени → OK`
+
+Только после этого код увидит её содержимое.
+
+Сюда идут: пункты **5** и **9** списка выше.
+
+## Место 3. Внутренние (встроенные) библиотеки → только шаг 2б
+
+Скачивать нечего, ставить в репозиторий нечего — они уже там. Нужен
+**только** шаг подключения к проекту:
+
+`Менеджер библиотек → Добавить библиотеку… → ввести имя → OK`
+
+⚠️ **Системные библиотеки (`SysTimeRtc` и прочие `Sys*`) в обычном
+списке не показываются.** В окне добавления нужно нажать
+**«Дополнительно…»** (Advanced) и включить отображение всех библиотек —
+только тогда они появятся в поиске.
+
+Сюда идут: пункты **27**–**30** списка выше.
+
+## Место 4. Описания устройств (`.devdesc.xml`, EDS, GSD) → уровень среды
+
+`Инструменты → Репозиторий устройств… → Установить… → выбрать файл`
+
+Тоже требует перезапуска среды. Сюда пошёл бы пункт **13**, если
+решите его ставить. Modbus-устройства отдельно устанавливать не надо —
+они уже есть.
+
+## Место 5. Драйверы и утилиты Windows → обычная установка
+
+Пункты **4**, **6**, **7**, **8** — обычные `.exe`, ставятся в Windows,
+к CODESYS отношения не имеют. Драйвер USB требует перезагрузки ПК.
+
+---
+
+# ЧАСТЬ 4. ПОРЯДОК УСТАНОВКИ С НУЛЯ
+
+1. Распаковать архив из пункта **1**, запустить `setup*.exe`
+   **от имени администратора**.
+2. Перезагрузить ПК — устанавливается служба CODESYS Gateway.
+3. Запустить CODESYS, поставить таргет — пункт **2**, Место 1.
+   Перезапустить среду.
+4. Установить драйвер USB — пункт **4**. Перезагрузить ПК.
+5. Поставить OwenVisuDialogs в репозиторий — пункт **5**, Место 2, шаг 2а.
+6. Открыть проект: `Файл → Открыть проект…`
+   При вопросе об обновлении версий устройств и библиотек —
+   **ничего не обновлять**.
+7. Открыть `Менеджер библиотек` и сверить состав со списком пунктов
+   **27**–**31**. Чего нет — добавить через Место 2 шаг 2б / Место 3.
+8. Нажать **F11**. Должно быть **0 ошибок**.
+9. Поставить утилиты из раздела B по необходимости.
+
+---
+
+# ЧАСТЬ 5. ЧЕК-ЛИСТ ПЕРЕД ВЫЕЗДОМ
+
+Скачано и установлено:
+
+- [ ] 1 — CODESYS V3.5 SP17 Patch 3
+- [ ] 2 — Таргет OwenTargets-3.5.17.36, СПК1хх [М01] виден в списке устройств
+- [ ] 4 — Драйвер SPK_USB_Driver
+- [ ] 5 — OwenVisuDialogs установлена И подключена в Менеджере библиотек
+- [ ] 6 — Конфигуратор М110
+- [ ] 8 — WinSCP
+- [ ] 14, 15, 21 — документация лежит на ноутбуке
+- [ ] 23, 24, 25 — РЭ на ПЧ и модули
+
+Подключено в проекте (`Менеджер библиотек`):
+
+- [ ] 27 — Standard
+- [ ] 28 — SysTimeRtc
+- [ ] 29 — CAA File
+- [ ] 30 — CAA Types Extern (как зависимость)
+- [ ] 31 — VisuElems (автоматически)
+- [ ] 5 — OwenVisuDialogs
+
+Проект:
+
+- [ ] `.project` открывается без ошибок
+- [ ] `F11` → **0 ошибок**
+- [ ] `node 60-let-oktyabrya/docs/sd_guard_model_test.js` → 165/165
+
+---
+
+# ЧАСТЬ 6. СТРУКТУРА ПРОЕКТА — ДЛЯ СВЕРКИ
 
 ```
 Device (СПК107 [М01])
 ├── PLC Logic
 │   └── Application
 │       ├── Менеджер библиотек
-│       │     Standard, Util
-│       │     CAA File            ← ОБЯЗАТЕЛЬНО (журналы на SD)
-│       │     SysTimeRtc          ← ОБЯЗАТЕЛЬНО (SysTimeRtcGet/Set/ConvertUtcToDate)
-│       │     OwenVisuDialogs     ← экраны пароля
-│       ├── GVL, GVL_Fountain     (списки глобальных переменных)
-│       ├── PLC_PRG               (вызывает всё остальное)
-│       ├── PRG_IO, PRG_Fountain, PRG_Pumps, PRG_Errors,
-│       │   PRG_TimeCorrect, PRG_AlarmLogSD, PRG_IO_Write
-│       ├── FB_*, F_*             (ФБ и функции)
+│       │     Standard · SysTimeRtc · CAA File
+│       │     CAA Types Extern · VisuElems · OwenVisuDialogs
+│       ├── GVL, GVL_Fountain          списки глобальных переменных
+│       ├── PLC_PRG                    главная программа
+│       ├── PRG_IO · PRG_Fountain · PRG_Pumps · PRG_Errors
+│       │   PRG_TimeCorrect · PRG_AlarmLogSD · PRG_IO_Write
+│       ├── FB_* и F_*                 блоки и функции
 │       ├── Конфигурация задач → MainTask → PLC_PRG
-│       └── Менеджер визуализации + экраны
-├── Modbus_COM  (COM1, 9600 8N1)
+│       └── Менеджер визуализации
+├── Modbus_COM      COM1, 9600 8N1
 │   └── Modbus_Master_COM_Port
-│       ├── МВ110-16Д   адрес 1   → wMV110_Inputs (WORD), xMV110_Error
-│       └── МУ110-16Р   адрес 2   → wMU110_Outputs, wMU110_OutputsRead, xMU110_Error
-└── Modbus_COM_2 (COM2, 38400)
+│       ├── МВ110-16Д   адрес 1   → wMV110_Inputs, xMV110_Error
+│       └── МУ110-16Р   адрес 2   → wMU110_Outputs, xMU110_Error
+└── Modbus_COM_2    COM2, 38400
     └── Modbus_Master_COM_Port
         ├── EMD_PUMP_1  адрес 41
         ├── EMD_PUMP_2  адрес 42
         └── EMD_PUMP_3  адрес 43   ← только «60 Лет Октября»
 ```
 
-**Насосы-шоу по объектам.** На «60 Лет Октября» их **три**
-(`cPumpCount := 3`, адреса 41/42/43), на ДДЮТ — **два**
-(`cPumpCount := 2`, адреса 41/42). Тип у всех — `E_PumpType.PUMP`.
+**Насосы по объектам.** «60 Лет Октября» — три (`cPumpCount := 3`,
+адреса 41/42/43), ДДЮТ — два (`cPumpCount := 2`, адреса 41/42).
+Тип у всех — `E_PumpType.PUMP`. Смена типа требует холодного сброса.
 
-`EMD_PUMP_3` есть в дереве «60 Лет Октября» и используется в коде
-явно: `PRG_Pumps.st`, блок 4а, строки 354 и 379 —
-`EMD_PUMP_3.xError`. Имя устройства в дереве должно совпадать точно,
-иначе файл не скомпилируется.
-
-У ДДЮТ дополнительно лежат `PRG_PR200.st` и `PRG_PolivSPK.st` —
-физически в проекте есть, но вызовы в `PLC_PRG.st` закомментированы.
+**Порядок вызова в `PLC_PRG`:** `PRG_IO` → `PRG_Fountain` →
+`PRG_Pumps` → `PRG_Errors` → `PRG_TimeCorrect` → `PRG_AlarmLogSD` →
+`PRG_IO_Write`. Сборка маски выходов идёт последней намеренно, иначе
+выходы отстают на один скан.
 
 ---
 
-## 6. Правила правки .st из этого репозитория
+# ЧАСТЬ 7. ПРАВИЛА ПРАВКИ ФАЙЛОВ .st
 
-Из `ddyut/docs/LOGIC.md` — грабли, найденные на реальном железе:
+Грабли, найденные на реальном железе (из `ddyut/docs/LOGIC.md`):
 
-- Файлы `.st` здесь — это содержимое окна **«Реализация»** редактора
-  CODESYS. Строку `END_PROGRAM` / `END_FUNCTION_BLOCK` в него
-  **не вставлять**: среда добавляет границу сама.
+- Файлы `.st` — содержимое окна **«Реализация»**. Строку
+  `END_PROGRAM` / `END_FUNCTION_BLOCK` не вставлять: среда ставит
+  границу сама.
 - Литералы WSTRING — **двойные** кавычки `"текст"`. Одинарные дают
   STRING и ошибку компиляции.
 - Вложенные комментарии `(* (* *) *)` ломают компиляцию.
-- `REAL_TO_INT` / `REAL_TO_UDINT` **округляют**, а не отбрасывают.
-- `WCONCAT` / `CONCAT` возвращают ~255 символов независимо от размера
+- `REAL_TO_INT` и `REAL_TO_UDINT` **округляют**, а не отбрасывают.
+- `WCONCAT` и `CONCAT` возвращают ~255 символов независимо от размера
   переменной. Растущий лог одной строкой невозможен — только массив
   коротких строк.
 - `CASE TRUE OF` недопустимо: метка CASE требует целочисленный литерал.
-
----
-
-## 7. Чек-лист «можно работать»
-
-- [ ] Найден и получен исходный `.project` / `.projectarchive`
-- [ ] Установлен CODESYS V3.5 SP17 Patch 3
-- [ ] Установлен таргет-пакет ОВЕН, СПК виден в списке устройств
-- [ ] Установлен драйвер USB для СПК
-- [ ] Установлена OwenVisuDialogs
-- [ ] Установлен Конфигуратор М110 (для адресов модулей)
-- [ ] Скачаны РЭ на EMD-PUMP, МВ110-16Д, МУ110-16Р
-- [ ] Проект открывается и компилируется без ошибок (F11)
-- [ ] `node 60-let-oktyabrya/docs/sd_guard_model_test.js` → 165/165

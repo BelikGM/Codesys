@@ -28,3 +28,6 @@ desktop.ini
 .DS_Store
 docs/*.html
 docs/*.zip
+
+# Личные настройки Claude Code (не для репозитория)
+.claude/settings.local.json

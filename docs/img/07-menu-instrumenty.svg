@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 352" width="640" height="352" role="img" aria-label="Меню Инструменты в CODESYS: CODESYS Installer, Репозиторий библиотек, Репозиторий устройств и остальные пункты">
+  <style>
+    .bar  { fill:#F0F1EE; stroke:#C3CAC1; stroke-width:1 }
+    .menu { fill:#FFFFFF; stroke:#8E958C; stroke-width:1 }
+    .sel  { fill:#CCE3F5; stroke:#7EA9CC; stroke-width:1 }
+    .t    { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; fill:#1A1D1A }
+    .tm   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; fill:#6A716B }
+    .cn   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:700; fill:#FFFFFF }
+    .lbl  { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:600; fill:#14584A }
+    .lbs  { font-family:"Segoe UI",Arial,sans-serif; font-size:10.5px; fill:#6A716B }
+    .dot  { fill:#14584A }
+    .lead { stroke:#14584A; stroke-width:1.3; fill:none }
+    .sep  { stroke:#D5DBD2; stroke-width:1 }
+  </style>
+
+  <!-- строка меню -->
+  <rect x="1" y="1" width="338" height="22" class="bar"/>
+  <rect x="1" y="1" width="86" height="22" class="sel"/>
+  <text x="12"  y="16" class="t">Инструменты</text>
+  <text x="100" y="16" class="t">Окно</text>
+  <text x="146" y="16" class="t">Справка</text>
+
+  <!-- выпадающее меню -->
+  <rect x="1" y="23" width="338" height="326" class="menu"/>
+
+  <!-- 1. CODESYS Installer (выделен) -->
+  <rect x="2" y="25" width="336" height="21" class="sel"/>
+  <circle cx="14" cy="35" r="6" fill="#C0392B"/>
+  <circle cx="14" cy="35" r="2.4" fill="#FFFFFF"/>
+  <text x="30" y="39" class="t">CODESYS Installer…</text>
+
+  <!-- 2. Репозиторий библиотек -->
+  <rect x="8" y="51" width="13" height="14" fill="#3F7A4A"/>
+  <rect x="11" y="53" width="7" height="10" fill="#DCE8E3"/>
+  <text x="30" y="60" class="t">Репозиторий библиотек…</text>
+
+  <!-- 3. Репозиторий устройств -->
+  <rect x="8" y="72" width="13" height="14" fill="#7A8B96"/>
+  <rect x="10" y="74" width="3" height="3" fill="#FFFFFF"/>
+  <rect x="15" y="74" width="3" height="3" fill="#FFFFFF"/>
+  <rect x="10" y="79" width="3" height="3" fill="#FFFFFF"/>
+  <rect x="15" y="79" width="3" height="3" fill="#FFFFFF"/>
+  <text x="30" y="81" class="t">Репозиторий устройств…</text>
+
+  <!-- 4. Репозиторий стилей визуализации -->
+  <rect x="8" y="93" width="13" height="14" fill="#C99B3E"/>
+  <circle cx="12" cy="98" r="1.8" fill="#FFFFFF"/>
+  <circle cx="17" cy="101" r="1.8" fill="#FFFFFF"/>
+  <text x="30" y="102" class="t">Репозиторий стилей визуализации…</text>
+
+  <!-- 5. Репозиторий лицензий -->
+  <rect x="8" y="114" width="13" height="14" fill="#D08A2C"/>
+  <circle cx="12" cy="119" r="2.6" fill="none" stroke="#FFFFFF" stroke-width="1.4"/>
+  <path d="M14 120 h5 v3" stroke="#FFFFFF" stroke-width="1.4" fill="none"/>
+  <text x="30" y="123" class="t">Репозиторий лицензий…</text>
+
+  <!-- 6. OPC UA -->
+  <rect x="8" y="135" width="13" height="14" fill="#5E7C8A"/>
+  <path d="M11 142 h7 M14.5 138.5 v7" stroke="#FFFFFF" stroke-width="1.3"/>
+  <text x="30" y="144" class="t">OPC UA Information Model Repository…</text>
+
+  <!-- 7. Менеджер лицензий -->
+  <rect x="8" y="156" width="13" height="14" fill="#D08A2C"/>
+  <circle cx="12" cy="161" r="2.6" fill="none" stroke="#FFFFFF" stroke-width="1.4"/>
+  <path d="M14 162 h5 v3" stroke="#FFFFFF" stroke-width="1.4" fill="none"/>
+  <text x="30" y="165" class="t">Менеджер лицензий…</text>
+
+  <!-- 8. Device Reader -->
+  <circle cx="13" cy="180" r="5" fill="none" stroke="#5E7C8A" stroke-width="1.6"/>
+  <path d="M17 184 l4 4" stroke="#5E7C8A" stroke-width="1.8"/>
+  <text x="30" y="186" class="t">Device Reader…</text>
+
+  <line x1="6" y1="196" x2="334" y2="196" class="sep"/>
+
+  <text x="30" y="213" class="t">Настройка…</text>
+  <text x="30" y="234" class="t">Опции…</text>
+  <text x="30" y="255" class="t">Импорт и экспорт опций…</text>
+
+  <line x1="6" y1="265" x2="334" y2="265" class="sep"/>
+
+  <text x="30" y="282" class="t">Скрипты</text>
+  <text x="322" y="282" class="t">▸</text>
+  <text x="30" y="303" class="t">Edge Gateway</text>
+  <text x="322" y="303" class="t">▸</text>
+  <text x="30" y="324" class="t">Miscellaneous</text>
+  <text x="322" y="324" class="t">▸</text>
+
+  <!-- выноски -->
+  <g>
+    <path d="M339 35 H372" class="lead"/>
+    <circle cx="386" cy="35" r="10" class="dot"/><text x="386" y="39" class="cn" text-anchor="middle">1</text>
+    <text x="402" y="32" class="lbl">Место 1 — пакеты .package</text>
+    <text x="402" y="46" class="lbs">таргет ОВЕН и Mx110Drivers · пункты 2 и 3</text>
+
+    <path d="M339 57 H360 V 90 H372" class="lead"/>
+    <circle cx="386" cy="90" r="10" class="dot"/><text x="386" y="94" class="cn" text-anchor="middle">2</text>
+    <text x="402" y="87" class="lbl">Место 2, шаг 2а — библиотеки</text>
+    <text x="402" y="101" class="lbs">OwenVisuDialogs · пункт 5</text>
+
+    <path d="M339 78 H352 V 145 H372" class="lead"/>
+    <circle cx="386" cy="145" r="10" class="dot"/><text x="386" y="149" class="cn" text-anchor="middle">3</text>
+    <text x="402" y="142" class="lbl">Место 4 — описания устройств</text>
+    <text x="402" y="156" class="lbs">.devdesc.xml, EDS, GSD — обычно не нужно</text>
+  </g>
+
+  <!-- сноска -->
+  <text x="402" y="205" class="lbs">Шаг 2б — подключение библиотеки</text>
+  <text x="402" y="219" class="lbs">к проекту — делается не отсюда,</text>
+  <text x="402" y="233" class="lbs">а из дерева проекта:</text>
+  <text x="402" y="247" class="lbl">Менеджер библиотек</text>
+</svg>

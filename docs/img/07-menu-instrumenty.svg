@@ -89,23 +89,23 @@
   <g>
     <path d="M339 35 H372" class="lead"/>
     <circle cx="386" cy="35" r="10" class="dot"/><text x="386" y="39" class="cn" text-anchor="middle">1</text>
-    <text x="402" y="32" class="lbl">Место 1 — пакеты .package</text>
+    <text x="402" y="32" class="lbl">Шаг 1 — пакеты .package</text>
     <text x="402" y="46" class="lbs">таргет ОВЕН и Mx110Drivers · пункты 2 и 3</text>
 
     <path d="M339 57 H360 V 90 H372" class="lead"/>
     <circle cx="386" cy="90" r="10" class="dot"/><text x="386" y="94" class="cn" text-anchor="middle">2</text>
-    <text x="402" y="87" class="lbl">Место 2, шаг 2а — библиотеки</text>
-    <text x="402" y="101" class="lbs">OwenVisuDialogs · пункт 5</text>
+    <text x="402" y="87" class="lbl">Шаг 2 — библиотеки .library</text>
+    <text x="402" y="101" class="lbs">всё, что скачано из «Загрузок»</text>
 
     <path d="M339 78 H352 V 145 H372" class="lead"/>
     <circle cx="386" cy="145" r="10" class="dot"/><text x="386" y="149" class="cn" text-anchor="middle">3</text>
-    <text x="402" y="142" class="lbl">Место 4 — описания устройств</text>
-    <text x="402" y="156" class="lbs">.devdesc.xml, EDS, GSD — обычно не нужно</text>
+    <text x="402" y="142" class="lbl">Описания устройств</text>
+    <text x="402" y="156" class="lbs">для этих двух проектов не нужно</text>
   </g>
 
   <!-- сноска -->
-  <text x="402" y="205" class="lbs">Шаг 2б — подключение библиотеки</text>
-  <text x="402" y="219" class="lbs">к проекту — делается не отсюда,</text>
-  <text x="402" y="233" class="lbs">а из дерева проекта:</text>
+  <text x="402" y="205" class="lbs">Шаг 3 — подключение к проекту</text>
+  <text x="402" y="219" class="lbs">делается не отсюда, а из дерева</text>
+  <text x="402" y="233" class="lbs">проекта:</text>
   <text x="402" y="247" class="lbl">Менеджер библиотек</text>
 </svg>

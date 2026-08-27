@@ -26,3 +26,5 @@ compare/
 Thumbs.db
 desktop.ini
 .DS_Store
+docs/*.html
+docs/*.zip

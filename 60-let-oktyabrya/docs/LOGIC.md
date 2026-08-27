@@ -179,8 +179,7 @@ xAlarmFountain := xDryRunAlarm OR xDryRunRelayAlarm OR xDamperRelayAlarm
    конструкция в CODESYS (метка CASE требует целочисленный литерал).
    Заменено на `IF/ELSIF/ELSE`.
 
-## Открытый вопрос
+## Насосы-шоу
 
-Устройство **EMD_PUMP_3** нужно добавить в дереве Modbus проекта
-вручную (предполагаемый адрес — 43, по аналогии с 41/42). Без него
-`PRG_Pumps.st` не скомпилируется.
+Три ПЧ EMD-PUMP на COM2, адреса 41/42/43. Все три есть в дереве
+Modbus проекта, `cPumpCount := 3`.

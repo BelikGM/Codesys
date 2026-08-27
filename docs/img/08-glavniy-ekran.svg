@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 330" width="660" height="330" role="img" aria-label="Главный экран фонтана после успешного запуска на софт-ПЛК: три насоса в состоянии Стоп и три ожидаемые аварии">
+  <style>
+    .bg   { fill:#16233A }
+    .box  { fill:#1B2C47; stroke:#3A5378; stroke-width:1 }
+    .hdr  { fill:#132033; stroke:#3A5378; stroke-width:1 }
+    .row  { fill:#1E3252; stroke:#3A5378; stroke-width:1 }
+    .btn  { fill:#2C6FB5; stroke:#4A8BD0; stroke-width:1 }
+    .ttl  { font-family:"Segoe UI",Arial,sans-serif; font-size:15px; font-weight:700; fill:#7FC4F0 }
+    .t    { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; fill:#DCE8F5 }
+    .tb   { font-family:"Segoe UI",Arial,sans-serif; font-size:12px; font-weight:700; fill:#FFFFFF }
+    .tc   { font-family:"Segoe UI",Arial,sans-serif; font-size:11px; fill:#9FB6D0 }
+    .alm  { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:600; fill:#FFD37A }
+    .cn   { font-family:"Segoe UI",Arial,sans-serif; font-size:11.5px; font-weight:700; fill:#FFFFFF }
+    .dot  { fill:#14584A }
+    .lead { stroke:#C9A227; stroke-width:1.4; fill:none }
+  </style>
+
+  <rect x="1" y="1" width="510" height="328" class="bg" stroke="#3A5378"/>
+
+  <!-- шапка -->
+  <rect x="1" y="1" width="510" height="34" class="hdr"/>
+  <rect x="8" y="6" width="24" height="24" fill="#DCE8F5"/>
+  <text x="230" y="24" class="ttl">Главная</text>
+  <text x="400" y="23" class="t">04:28:26</text>
+  <text x="462" y="23" class="t">28.08.2026</text>
+
+  <!-- левый столбец -->
+  <rect x="1" y="35" width="122" height="118" class="box"/>
+  <text x="62" y="56" class="t" text-anchor="middle">Чаша Фонтана</text>
+  <circle cx="30" cy="95" r="11" fill="#E03A3A"/>
+  <text x="50" y="99" class="t">Сухой ход</text>
+
+  <!-- правая часть шапки -->
+  <rect x="123" y="35" width="388" height="24" class="box"/>
+  <text x="180" y="52" class="tb">НФ в работе:</text>
+  <text x="290" y="52" class="tb">00 час</text>
+  <text x="370" y="52" class="tb">00 мин</text>
+  <text x="450" y="52" class="tb">00 сек</text>
+
+  <rect x="123" y="59" width="388" height="22" class="box"/>
+  <text x="180" y="75" class="tb">Насосы</text>
+  <text x="300" y="75" class="tb">08 : 00</text>
+  <text x="370" y="75" class="tb">—</text>
+  <text x="430" y="75" class="tb">23 : 00</text>
+
+  <rect x="123" y="81" width="388" height="22" class="box"/>
+  <text x="180" y="97" class="tb">Светильники</text>
+  <text x="300" y="97" class="tb">19 : 32</text>
+  <text x="370" y="97" class="tb">—</text>
+  <text x="430" y="97" class="tb">23 : 00</text>
+
+  <rect x="123" y="103" width="388" height="50" class="box"/>
+  <text x="317" y="133" class="ttl" text-anchor="middle">Клапан добора : Закрыт</text>
+
+  <!-- счётчики насосов -->
+  <rect x="1" y="153" width="510" height="30" class="box"/>
+  <text x="62" y="172" class="t" text-anchor="middle">Насосы Фонтана</text>
+  <rect x="128" y="159" width="118" height="19" class="box"/>
+  <text x="187" y="172" class="t" text-anchor="middle">Работает: 0</text>
+  <rect x="254" y="159" width="118" height="19" class="box"/>
+  <text x="313" y="172" class="t" text-anchor="middle">Стоп: 3</text>
+  <rect x="380" y="159" width="118" height="19" class="box"/>
+  <text x="439" y="172" class="t" text-anchor="middle">Авария: 0</text>
+
+  <!-- таблица насосов -->
+  <rect x="1" y="183" width="510" height="20" class="hdr"/>
+  <text x="16"  y="197" class="tc">№</text>
+  <text x="44"  y="197" class="tc">●</text>
+  <text x="76"  y="197" class="tc">Состояние ПЧ</text>
+  <text x="168" y="197" class="tc">Факт. Гц</text>
+  <text x="228" y="197" class="tc">t</text>
+  <text x="256" y="197" class="tc">Нараб. час</text>
+  <text x="336" y="197" class="tc">ПУСК</text>
+  <text x="392" y="197" class="tc">СТОП</text>
+  <text x="448" y="197" class="tc">Отладка</text>
+
+  <g>
+    <rect x="1" y="203" width="510" height="24" class="box"/>
+    <text x="16" y="219" class="t">1</text><circle cx="48" cy="215" r="7" fill="#8892A0"/>
+    <text x="76" y="219" class="t">Стоп</text><text x="168" y="219" class="t">0.0 Гц</text>
+    <text x="228" y="219" class="t">0°</text><text x="262" y="219" class="t">0 ч</text>
+    <rect x="322" y="207" width="54" height="16" class="btn"/><text x="349" y="219" class="t" text-anchor="middle">ПУСК</text>
+    <rect x="380" y="207" width="54" height="16" fill="#FFFFFF"/><text x="407" y="219" font-family="Segoe UI,Arial" font-size="10.5" fill="#16233A" text-anchor="middle">СТОП</text>
+    <rect x="440" y="207" width="60" height="16" class="btn"/><text x="470" y="219" class="t" text-anchor="middle">Детали</text>
+  </g>
+  <g>
+    <rect x="1" y="227" width="510" height="24" class="row"/>
+    <text x="16" y="243" class="t">2</text><circle cx="48" cy="239" r="7" fill="#8892A0"/>
+    <text x="76" y="243" class="t">Стоп</text><text x="168" y="243" class="t">0.0 Гц</text>
+    <text x="228" y="243" class="t">0°</text><text x="262" y="243" class="t">0 ч</text>
+    <rect x="322" y="231" width="54" height="16" class="btn"/><text x="349" y="243" class="t" text-anchor="middle">ПУСК</text>
+    <rect x="380" y="231" width="54" height="16" fill="#FFFFFF"/><text x="407" y="243" font-family="Segoe UI,Arial" font-size="10.5" fill="#16233A" text-anchor="middle">СТОП</text>
+    <rect x="440" y="231" width="60" height="16" class="btn"/><text x="470" y="243" class="t" text-anchor="middle">Детали</text>
+  </g>
+  <g>
+    <rect x="1" y="251" width="510" height="24" class="box"/>
+    <text x="16" y="267" class="t">3</text><circle cx="48" cy="263" r="7" fill="#8892A0"/>
+    <text x="76" y="267" class="t">Стоп</text><text x="168" y="267" class="t">0.0 Гц</text>
+    <text x="228" y="267" class="t">0°</text><text x="262" y="267" class="t">0 ч</text>
+    <rect x="322" y="255" width="54" height="16" class="btn"/><text x="349" y="267" class="t" text-anchor="middle">ПУСК</text>
+    <rect x="380" y="255" width="54" height="16" fill="#FFFFFF"/><text x="407" y="267" font-family="Segoe UI,Arial" font-size="10.5" fill="#16233A" text-anchor="middle">СТОП</text>
+    <rect x="440" y="255" width="60" height="16" class="btn"/><text x="470" y="267" class="t" text-anchor="middle">Детали</text>
+  </g>
+
+  <!-- строка аварий -->
+  <rect x="1" y="275" width="510" height="54" class="box"/>
+  <text x="256" y="306" class="alm" text-anchor="middle">Аварии: Сухой ход, Связь МВ-Д, Связь МУ,</text>
+
+  <!-- выноски -->
+  <g>
+    <path d="M42 95 H 528" class="lead"/>
+    <circle cx="542" cy="95" r="10" class="dot"/><text x="542" y="99" class="cn" text-anchor="middle">1</text>
+
+    <path d="M372 168 H 528" class="lead"/>
+    <circle cx="542" cy="168" r="10" class="dot"/><text x="542" y="172" class="cn" text-anchor="middle">2</text>
+
+    <path d="M420 302 H 528" class="lead"/>
+    <circle cx="542" cy="302" r="10" class="dot"/><text x="542" y="306" class="cn" text-anchor="middle">3</text>
+  </g>
+
+  <text x="562" y="88" font-family="Segoe UI,Arial" font-size="10.5" font-weight="600" fill="#14584A">Сухой ход</text>
+  <text x="562" y="102" font-family="Segoe UI,Arial" font-size="10" fill="#6A716B">горит — без железа</text>
+  <text x="562" y="114" font-family="Segoe UI,Arial" font-size="10" fill="#6A716B">DI4 = 0, это норма</text>
+
+  <text x="562" y="161" font-family="Segoe UI,Arial" font-size="10.5" font-weight="600" fill="#14584A">Стоп: 3</text>
+  <text x="562" y="175" font-family="Segoe UI,Arial" font-size="10" fill="#6A716B">три ПЧ на месте —</text>
+  <text x="562" y="187" font-family="Segoe UI,Arial" font-size="10" fill="#6A716B">EMD_PUMP_3 в дереве</text>
+
+  <text x="562" y="295" font-family="Segoe UI,Arial" font-size="10.5" font-weight="600" fill="#14584A">Три аварии</text>
+  <text x="562" y="309" font-family="Segoe UI,Arial" font-size="10" fill="#6A716B">на софт-ПЛК ожидаемы:</text>
+  <text x="562" y="321" font-family="Segoe UI,Arial" font-size="10" fill="#6A716B">модулей физически нет</text>
+</svg>
